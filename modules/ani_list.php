@@ -3,7 +3,7 @@ if (!defined('ALIST')) { die('Working hard...'); }
 /**
  * Anime item of Anime list representation
  */
-class AnimeItem{
+class AnimeItem implements JsonSerializable{
   // filters
   private $_dirs;
   private $_replace_mask = array(
@@ -64,6 +64,13 @@ class AnimeItem{
     return $this->_filtered_folder;
   }
 
+  public function jsonSerialize() {
+        return array(
+            "folder" => $this->_folder,
+            "location" => $this->_path,
+            "name" => $this->__toString()
+          );
+    }
 
 }
 
@@ -79,8 +86,14 @@ class AnimeList{
      * @param string source1, source2, sourceN
      */
     public function __construct( /* arg list of sources*/ ){
-      $this->_dirs=func_get_args();
+      $args=func_get_args();
+      if (count($args)==1){
+        if (is_array($args[0])) $this->_dirs=$args[0];
+      } else {
+        $this->_dirs=$args;
+      }
     }
+
 
     /**
      * Build anime list based on provided sources (with filtering of names)
@@ -101,7 +114,7 @@ class AnimeList{
       $list = array_filter($list, function ($el){
                       return !in_array($el, $this->_filter);
                      });
-     return $list;
+     return array_values($list);
     }
 }
 ?>
