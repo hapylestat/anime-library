@@ -11,8 +11,8 @@ class AnimeItem implements JsonSerializable{
                          array("/\s\s/"," "),
                          array("/(^[A-Z][a-z\d]+)([A-Z])/","$1 $2"), //add space to sentence like SomeWord
                          array("/\s\-\s/"," "),
-                         array("/\[[\d\w\s\-\.\+\&\~]+\]/",""),
-                         array("/\([\d\w\s\-\.\+\&\~]+\)/",""),
+                         array("/\[[^\[\]]+\]/",""), //old-\[[\d\w\s\-\.\+\&\~]+\]
+                         array("/\([^\(\)]+\)/",""),//\([\d\w\s\-\.\+\&\~]+\)
                          array("/TV\+OVA/i",""),
                          array("/TV\+SPECIAL/i",""),
                          array("/\sTV\s*\-\s*\d/",""),
