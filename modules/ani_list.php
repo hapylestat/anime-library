@@ -28,6 +28,7 @@ class AnimeItem implements JsonSerializable{
                          array("/\./"," "),
                          array("/\smovies/i","")
                         );
+  private $_synonym_mask = "/\{([^\{\}]+)\}/";
   private $_folder,$_filtered_folder,$_path;
 
   /**
@@ -43,6 +44,11 @@ class AnimeItem implements JsonSerializable{
   }
 
   public function __construct($data,$opt=""){
+   $matches=array();
+   if (preg_match($this->_synonym_mask, $data, $matches) === 1 && count($matches) > 1) {
+     $data = $matches[1];
+     echo $data;
+   }
    $this->_folder=$data;
    $this->_path=$opt;
   }
