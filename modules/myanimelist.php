@@ -109,6 +109,24 @@ class MyAnimeList{
       return substr_count($name," ");
     }
 
+  function isXmlStructureValid($file) {
+    $prev = libxml_use_internal_errors(true);
+    $ret = true;
+    try {
+      new SimpleXMLElement($file, 0, false);
+    } catch(Exception $e) {
+      $ret = false;
+    }
+    if(count(libxml_get_errors()) > 0) {
+      // There has been XML errors
+      $ret = false;
+    }
+    // Tidy up.
+    libxml_clear_errors();
+    libxml_use_internal_errors($prev);
+    return $ret;
+  }
+
     /**
      * [basic] Looking for set of results on MAL
      * @param  string $name MAL Querry
@@ -145,7 +163,11 @@ class MyAnimeList{
 
         $p=str_replace("&","&amp;",$p);
         if ($filter){ // math querry on all subset of results
-          $list=simplexml_load_string($p)->entry;
+          if ($this->isXmlStructureValid($p)) {
+            $list=simplexml_load_string($p)->entry;
+          } else {
+            die($this->_req->get_error_id()."<br/>".htmlspecialchars($p));
+          }
           $result_list=array();
 
           #  step 1. Soft filter settings
@@ -161,7 +183,11 @@ class MyAnimeList{
           }
           return $result_list;
         } else {
-          return simplexml_load_string($p)->entry;
+          if ($this->isXmlStructureValid($p)){
+           return simplexml_load_string($p)->entry;
+          } else {
+            die($this->_req->get_error_id()."<br/>".htmlspecialchars($p));
+          }
         }
       } else {
        return array();

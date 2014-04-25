@@ -45,7 +45,7 @@ function showDialog(pic,name,folder,share,mal){
 </script>
 <?php
 define('ALIST', 'nyaaa');
-//define('DEVDEBUG', true);
+define('DEVDEBUG', true);
 
 include('config.php');
 include('modules/ani_list.php');

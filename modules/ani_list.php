@@ -47,7 +47,7 @@ class AnimeItem implements JsonSerializable{
    $matches=array();
    if (preg_match($this->_synonym_mask, $data, $matches) === 1 && count($matches) > 1) {
      $data = $matches[1];
-  s }
+   }
    $this->_folder=$data;
    $this->_path=$opt;
   }
