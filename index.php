@@ -45,7 +45,7 @@ function showDialog(pic,name,folder,share,mal){
 </script>
 <?php
 define('ALIST', 'nyaaa');
-define('DEVDEBUG', true);
+//define('DEVDEBUG', false);
 
 include('config.php');
 include('modules/ani_list.php');
@@ -69,7 +69,7 @@ $mylist=$alist->load();
 //echo "<pre>",json_encode($mylist, JSON_PRETTY_PRINT),"</pre>";
 //die();
 $mal = new MyAnimeList();
-if (! $mal->login($MAL_USER,$MAL_PASS, false)){
+if (! $mal->login($MAL_USER,$MAL_PASS,$MAL_API_KEY, false)){
   die("MyAnimeList login failed ;(");
 }
 

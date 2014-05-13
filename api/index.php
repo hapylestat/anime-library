@@ -31,7 +31,7 @@ function command_list($data) {
 
 
 function command_info($data){
-  global $MAL_USER,$MAL_PASS;
+  global $MAL_USER,$MAL_PASS,$MAL_API_KEY;
 
   if (trim($data) == "" ) {
     send_response("fail", "empty query");
@@ -40,7 +40,7 @@ function command_info($data){
 
   $mal = new MyAnimeList();
 
-  if (! $mal->login($MAL_USER,$MAL_PASS, false)){
+  if (! $mal->login($MAL_USER,$MAL_PASS,$MAL_API_KEY, false)){
    send_response("fail", "MyAnimeList login failed");
    return;
   }

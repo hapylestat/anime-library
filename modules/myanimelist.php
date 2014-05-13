@@ -52,7 +52,6 @@ class MyAnimeList{
    * Initialize base class
    */
   public function __construct(){
-    $this->_req = new cURLReq();
     $this->mal_account=$this->mal_api.$this->mal_account;
     $this->mal_search=$this->mal_api.$this->mal_search;
   }
@@ -76,12 +75,14 @@ class MyAnimeList{
    * [basic] Authorization on MAL
    * @param  string  $user MAL Username
    * @param  string  $pass MAL Password
+   * @param  string  $mal api key
    * @param  boolean $check_login Check login or just cache tokens for the session
    * @return boolean
    */
-  public function login($user, $pass, $check_login=true){
+  public function login($user, $pass, $api_key, $check_login=true){
     $this->_user=$user;
     $this->_pass=$pass;
+    $this->_req = new cURLReq($api_key);
     if ($check_login) {
       $p=$this->_req->request($this->mal_account,$user,$pass);
       return ($this->_req->last_code() == 200);

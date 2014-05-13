@@ -11,11 +11,13 @@ class cURLReq{
    private $_c_hit=0;
    private $_c_miss=0;
    private $_last_req_id="";
+   private $_MAL_API_KEY="";
 
    /**
     * Create instance of cURL helper
     */
-   public function __construct(){
+   public function __construct($mal_api_key){
+    $this->_MAL_API_KEY=$mal_api_key;
     $this->_mypath=realpath(dirname(__FILE__));
     $this->_cache=$this->_mypath."/../cache";
    }
@@ -120,11 +122,8 @@ class cURLReq{
     $this->_c_miss++;
     if (defined('DEVDEBUG')) echo "<br>",$url,"<br>";
     $s=curl_init();
-    curl_setopt($s, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36');
+    curl_setopt($s, CURLOPT_USERAGENT, $this->_MAL_API_KEY);
     curl_setopt($s, CURLOPT_HTTPHEADER, array(
-    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Encoding: gzip,deflate,sdch',
-    'Accept-Language: en-US,en;q=0.8',
     'Connection: close'
     ));
     curl_setopt($s,CURLOPT_URL,$url);
