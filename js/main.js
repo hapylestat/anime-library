@@ -21,10 +21,10 @@ function got_data(xmlhttp, options){
       if ( obj.query == "info" && obj.status == "ok") {
          var item_folder = options.folder || '';
          var item_location = options.location || '';
-         var a=document.createElement("a");
+        // var a=document.createElement("a");
          var img=document.createElement("img");
-         a.href="#";
-         a.onclick=function(){
+         //a.href="#";
+         img.onclick=function(){
           //pic,name,folder,share,mal
           showDialog(obj.data.image,obj.data.title,item_location+"/"+item_folder,SHARE_MAP[item_location]+"\\"+item_folder,"http://myanimelist.net/anime/" + obj.data.id);
          }
@@ -32,8 +32,9 @@ function got_data(xmlhttp, options){
          img.width=225;
          img.height=309;
          img.title=obj.data.title;
-         a.appendChild(img);
-         document.getElementById("myDiv").appendChild(a);
+         img.style.cursor="pointer";
+        // a.appendChild(img);
+         document.getElementById("myDiv").appendChild(img);
          //document.getElementById("myDiv").innerHTML+="<img src='" + obj.data.image + "' width='225' height='309'/>";
       }
   } else {
@@ -61,7 +62,7 @@ xmlhttp.send();
 
 
 function showDialog(pic,name,folder,share,mal){
-      vex.dialog.open({
+     vex.dialog.open({
       message: name,
       contentCSS:{ width: '800px' },
       input: " \
