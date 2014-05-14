@@ -14,7 +14,7 @@ if (!isset($_GET["q"])) $_GET["q"] = "";
 if (!isset($_GET["data"])) $_GET["data"] = "";
 
 preg_match("/^[\w]+/",$_GET["q"],$command);
-preg_match("/^[\w\d\s\,\!\'\-]+/i",$_GET["data"],$data);
+preg_match("/^[\w\d\s\,\!\'\-\.]+/i",$_GET["data"],$data);
 
 $command = (count($command) > 0)? $command[0]: "";
 $data = (count($data) > 0)? $data[0]: "";

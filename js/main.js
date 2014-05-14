@@ -13,7 +13,7 @@ function got_data(xmlhttp, options){
         document.getElementById("status").innerHTML="Item count: " + obj.data.length.toString();
         for (var i=0;i<obj.data.length;i++){
           //document.getElementById("myDiv").innerHTML+=obj.data[i].name + "<br>";
-          loadXMLDoc("api/?q=info&data=" + obj.data[i].name, { folder: obj.data[i].folder, location: obj.data[i].location});
+          loadXMLDoc("api/?q=info&data=" + obj.data[i].name, { name: obj.data[i].name, folder: obj.data[i].folder, location: obj.data[i].location});
           NProgress.inc();
         }
         NProgress.done();
@@ -36,6 +36,10 @@ function got_data(xmlhttp, options){
         // a.appendChild(img);
          document.getElementById("myDiv").appendChild(img);
          //document.getElementById("myDiv").innerHTML+="<img src='" + obj.data.image + "' width='225' height='309'/>";
+      }
+      if ( obj.query == "info" && obj.status == "fail") {
+        var item_name = options.name || '';
+        document.getElementById("failed").innerHTML+=item_name +", "+obj.data+"<br/>";
       }
   } else {
 

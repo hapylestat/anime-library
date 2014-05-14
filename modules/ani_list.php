@@ -44,10 +44,6 @@ class AnimeItem implements JsonSerializable{
   }
 
   public function __construct($data,$opt=""){
-   $matches=array();
-   if (preg_match($this->_synonym_mask, $data, $matches) === 1 && count($matches) > 1) {
-     $data = $matches[1];
-   }
    $this->_folder=$data;
    $this->_path=$opt;
   }
@@ -65,7 +61,14 @@ class AnimeItem implements JsonSerializable{
   }
 
   public function __toString(){
-    if ($this->_filtered_folder=="") $this->_filtered_folder=$this->normalize_title($this->_folder);
+    if ($this->_filtered_folder==""){
+      $matches=array();
+      if (preg_match($this->_synonym_mask, $this->_folder, $matches) === 1 && count($matches) > 1) {
+        $this->_filtered_folder = $matches[1];
+      } else {
+       $this->_filtered_folder= $this->normalize_title($this->_folder);
+      }
+   }
     return $this->_filtered_folder;
   }
 
