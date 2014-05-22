@@ -3,6 +3,7 @@ if (!defined('ALIST')) { die('Working hard...'); }
 
 include("curl_helper.php");
 
+define("optCached","@cached@");
 /**
  * Wrapper, which allows to work with MAL API
  */
@@ -143,20 +144,20 @@ class MyAnimeList{
      if ($this->_req->last_code() != 200) {
        $temp_name=$name;
        for ($round=0;$round<=$this->try_count($name);$round++){
-        $temp_name=$this->try_search($temp_name);
-        if (defined('DEVDEBUG')) echo "Try $round - $temp_name<br/>";
+            $temp_name=$this->try_search($temp_name);
+            if (defined('DEVDEBUG')) echo "Try $round - $temp_name<br/>";
 
-        // myanimelist api has an error, they is more strict to passed search string ;(
-        if ($round == $this->try_count($name)-1){  //  there's left only one word
-          $p = $this->_req->request($this->mal_search.urlencode($temp_name.":"),$this->_user,$this->_pass,false,$name);
-          if ($this->_req->last_code() == 200 && strstr($p,$temp_name)!==FALSE) {
-            $this->_req->put_cache_custom($name,$p);
-            break;
-          }
-        }
+            // myanimelist api has an error, they is more strict to passed search string ;(
+            if ($round == $this->try_count($name)-1){  //  there's left only one word
+              $p = $this->_req->request($this->mal_search.urlencode($temp_name.":"),$this->_user,$this->_pass,false,$name);
+              if ($this->_req->last_code() == 200 && strstr($p,$temp_name)!==FALSE) {
+                $this->_req->put_cache_custom($name,$p);
+                break;
+              }
+            }
 
-        $p = $this->_req->request($this->mal_search.urlencode($temp_name),$this->_user,$this->_pass,true,$name);
-        if ($this->_req->last_code() == 200) break; //  we found possible answer
+            $p = $this->_req->request($this->mal_search.urlencode($temp_name),$this->_user,$this->_pass,true,$name);
+            if ($this->_req->last_code() == 200) break; //  we found possible answer
        }
      }
 
@@ -182,10 +183,30 @@ class MyAnimeList{
              if ($this->math_anime($item,$name)) array_push($result_list, $item);
             }
           }
+
+          # step 3. Cache posters locally
+          //array_walk($result_list, function (&$el){
+          $el=$result_list[0];
+              if (isset($el->image)){
+                if ($this->_req->cache_image($el->image,$el->title)){
+                  $el->image=optCached;
+                }
+              }
+          //});
+
           return $result_list;
         } else {
           if ($this->isXmlStructureValid($p)){
-           return simplexml_load_string($p)->entry;
+              $result_list = simplexml_load_string($p)->entry;
+              //array_walk($result_list, function (&$el){
+              $el=$result_list[0];
+                if (isset($el->image)){
+                  if ($this->_req->cache_image($el->image,$el->title)) {
+                    $el->image=optCached;
+                  }
+                }
+            //});
+             return $result_list;
           } else {
             die($this->_req->get_error_id()."<br/>".htmlspecialchars($p));
           }

@@ -2,6 +2,18 @@ var SHARE_MAP={"/storage6/serials": "\\\\gate.home\\serials1",
                "/storage7/serials": "\\\\gate.home\\serials2"};
 
 
+function download_complete(storeid,data){
+  localStorage.setItem(storeid, data);
+}
+
+function get_image(id, url){
+ if (url == "@cached@") {
+  return "api/?q=image&data=" + escape(id);
+ } else {
+  return url;
+ }
+}
+
 function got_data(xmlhttp, options){
   var options = options || {};
 
@@ -26,9 +38,9 @@ function got_data(xmlhttp, options){
          //a.href="#";
          img.onclick=function(){
           //pic,name,folder,share,mal
-          showDialog(obj.data.image,obj.data.title,item_location+"/"+item_folder,SHARE_MAP[item_location]+"\\"+item_folder,"http://myanimelist.net/anime/" + obj.data.id);
+          showDialog(get_image(obj.data.title,obj.data.image),obj.data.title,item_location+"/"+item_folder,SHARE_MAP[item_location]+"\\"+item_folder,"http://myanimelist.net/anime/" + obj.data.id);
          }
-         img.src=obj.data.image;
+         img.src=get_image(obj.data.title,obj.data.image);
          img.width=225;
          img.height=309;
          img.title=obj.data.title;
@@ -63,6 +75,7 @@ xmlhttp.onreadystatechange=function(){got_data(xmlhttp, options);}
 xmlhttp.open("GET",req,true);
 xmlhttp.send();
 }
+
 
 
 function showDialog(pic,name,folder,share,mal){

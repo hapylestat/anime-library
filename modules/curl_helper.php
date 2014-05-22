@@ -2,12 +2,15 @@
 if (!defined('ALIST')) { die('Working hard...'); }
 define('UPDATE_BIG_CACHE', false);
 define('BIG_CACHE_SIZE', 15000);
+
+define('typeData','data');
+define('typeImage','image');
 /**
  * cURL helper
  */
 class cURLReq{
    private $_http_code = 0;
-   private $_mypath, $_cache;
+   private $_mypath, $_cache, $_data_cache, $_image_cache;
    private $_c_hit=0;
    private $_c_miss=0;
    private $_last_req_id="";
@@ -16,10 +19,12 @@ class cURLReq{
    /**
     * Create instance of cURL helper
     */
-   public function __construct($mal_api_key){
+   public function __construct($mal_api_key=""){
     $this->_MAL_API_KEY=$mal_api_key;
     $this->_mypath=realpath(dirname(__FILE__));
     $this->_cache=$this->_mypath."/../cache";
+    $this->_data_cache=$this->_cache."/data";
+    $this->_image_cache=$this->_cache."/images";
    }
 
   public function get_error_id(){
@@ -42,21 +47,31 @@ class cURLReq{
   /**
    * Return path to cache file based on given URL
    * @param  string $url Cache key
+   * @param  string $type Type of the cache
    * @return string cache file path
    */
-  private function cache_get_path($url){
+  private function cache_get_path($url, $type=typeData){
     $this->_last_req_id = sha1($url);
-   return $this->_cache."/".sha1($url);
+    switch($type){
+      case typeData:
+        return $this->_data_cache."/".sha1($url);
+      break;
+      case typeImage:
+        return $this->_image_cache."/".sha1($url);
+      break;
+    }
+    return $this->_data_cache."/".sha1($url);
   }
 
   /**
    * Check present of cache file
    * @param  string $url Cache key
+   * @param  string $type Type of the cache
    * @return boolean
    */
-  private function cache_check_hit($url){
+  public function cache_check_hit($url, $type=typeData){
     if (UPDATE_BIG_CACHE){
-      $path=$this->cache_get_path($url);
+      $path=$this->cache_get_path($url, $type);
         if (file_exists($path)){
           if (filesize($path) > BIG_CACHE_SIZE){
            unlink($path);
@@ -64,26 +79,28 @@ class cURLReq{
         }
       }
     }
-    return file_exists($this->cache_get_path($url));
+    return file_exists($this->cache_get_path($url, $type));
   }
 
   /**
    * Return cached contend
    * @param  string $url Cache key
+   * @param  string $type Type of the cache
    * @return string
    */
-  private function cache_get($url){
-    return file_get_contents($this->cache_get_path($url));
+  public function cache_get($url, $type=typeData){
+    return file_get_contents($this->cache_get_path($url, $type));
   }
 
   /**
    * Store content to cache
    * @param  string $url Cache key
    * @param  string $content Content which need to be stored
+   * @param  string $type Type of the cache
    * @return int always 0
    */
-  private function cache_put($url, $content){
-    file_put_contents($this->cache_get_path($url), $content);
+  private function cache_put($url, $content, $type=typeData){
+    file_put_contents($this->cache_get_path($url,$type), $content);
     return 0;
   }
 
@@ -91,10 +108,11 @@ class cURLReq{
    * Put to cache custom data (use it carefully)
    * @param string $key
    * @param string $content
+   * @param  string $type Type of the cache
    */
-  public function put_cache_custom($key,$content){
+  public function put_cache_custom($key,$content,$type=typeData){
     if (defined('DEVDEBUG')) echo "Cache: manually putting ". $key."<br/>";
-    $this->cache_put($key,$content);
+    $this->cache_put($key,$content,$type);
   }
 
   /**
@@ -141,6 +159,30 @@ class cURLReq{
       $this->cache_put($hbase,$page);
     }
     return $page;
+  }
+
+  /**
+   * chache image
+   * @param  String $url url to download image
+   * @param  String $id  unique id
+   * @return Bool      result
+   */
+  public function cache_image($url, $id){
+    if ($this->cache_check_hit($id,typeImage)){
+      return true;
+    }
+    $s=curl_init();
+    curl_setopt($s,CURLOPT_URL,$url);
+    curl_setopt($s,CURLOPT_RETURNTRANSFER, true);
+    $page=curl_exec($s);
+    $_http_code=curl_getinfo($s,CURLINFO_HTTP_CODE);
+    if ( $_http_code == 200 ) {
+      $this->cache_put($id,$page,typeImage);
+      return true;
+    } else {
+      return false;
+    }
+
   }
 }
 
