@@ -22,7 +22,7 @@ class cURLReq{
    public function __construct($mal_api_key=""){
     $this->_MAL_API_KEY=$mal_api_key;
     $this->_mypath=realpath(dirname(__FILE__));
-    $this->_cache=$this->_mypath."/../cache";
+    $this->_cache=$this->_mypath."/../../cache";
     $this->_data_cache=$this->_cache."/data";
     $this->_image_cache=$this->_cache."/images";
    }

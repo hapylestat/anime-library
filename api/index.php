@@ -2,9 +2,9 @@
 define('ALIST', 'nyaaa');
 //define('DEVDEBUG', true);
 
-include('../config.php');
-include('../modules/ani_list.php');
-include('../modules/myanimelist.php');
+include('config.php');
+include('modules/ani_list.php');
+include('modules/myanimelist.php');
 
 
 
