@@ -1,17 +1,12 @@
 <html>
 <head>
 <title>Anime list</title>
-  <link rel="stylesheet" href="css/vex.css"/>
-  <link rel="stylesheet" href="css/vex-theme-default.css"/>
-  <link rel="stylesheet" href="css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="css/main.css"/>
-  <link rel="stylesheet" href="css/nprogress.css"/>
 </head>
 <body>
 
 <div id="type-selector" class="btn-group-vertical btn-group-sm btn-toggle pull-right hidden">
-  <button id="btn-plate" type="button" class="btn btn-default btn-lg active"><span class="glyphicon glyphicon-th"/></button>
-  <button id="btn-list" type="button" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-list"/></button>
+  <button id="btn-plate" type="button" class="square btn btn-default btn-lg active"><span class="glyphicon glyphicon-th"/></button>
+  <button id="btn-list" type="button" class="square btn btn-default btn-lg"><span class="glyphicon glyphicon-list"/></button>
 </div>
 
 <div id="container_plates"></div>
@@ -35,20 +30,7 @@ Failed items: <br/>
 <div id="status"></div>
 
 <!-- script loading block -->
-<script src="js/jquery-1.11.1.min.js"></script>
-<script src="js/vex.combined.min.js"></script>
-<script src="js/nprogress.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/main.js"></script>
-
-<!-- main app block -->
-
-<script type="text/javascript">
-  vex.defaultOptions.className = 'vex-theme-default';
-  window.onload = function(){
-    startApp();
-  }
-</script>
+<script src="js/loader.js"></script>
 
 </body>
 </html>

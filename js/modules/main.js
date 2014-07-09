@@ -56,7 +56,7 @@ function got_data(json, options){
      var table=document.getElementById("container_list_table");
      var row=document.createElement("tr");
 
-     
+
      //========plate style
      img.onclick=function(){
       //pic,name,folder,share,mal
@@ -146,4 +146,12 @@ function startApp(){
   });
 
   loadXMLDoc("api/?q=list");
+}
+
+
+
+
+loader.onLoad = function(){
+  vex.defaultOptions.className = 'vex-theme-default';
+  startApp();
 }

@@ -1,0 +1,24 @@
+{
+    "css": {
+        "vendor": [
+            "vex",
+            "vex-theme-default",
+            "bootstrap.min",
+            "nprogress"
+        ],
+        "app": [
+             "main"
+        ]
+    },
+    "js": {
+        "vendor": [
+            "jquery-1.11.1.min",
+            "vex.combined.min",
+            "nprogress",
+            "bootstrap.min"
+        ],
+        "app": [
+            "main"
+        ]
+    }
+}

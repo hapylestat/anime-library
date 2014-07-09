@@ -186,12 +186,14 @@ class MyAnimeList{
 
           # step 3. Cache posters locally
           //array_walk($result_list, function (&$el){
+          if (count($result_list) > 0) {
           $el=$result_list[0];
               if (isset($el->image)){
                 if ($this->_req->cache_image($el->image,$el->title)){
                   $el->image=optCached;
                 }
               }
+            }
           //});
 
           return $result_list;
@@ -199,12 +201,14 @@ class MyAnimeList{
           if ($this->isXmlStructureValid($p)){
               $result_list = simplexml_load_string($p)->entry;
               //array_walk($result_list, function (&$el){
+              if (count($result_list) > 0) {
               $el=$result_list[0];
                 if (isset($el->image)){
                   if ($this->_req->cache_image($el->image,$el->title)) {
                     $el->image=optCached;
                   }
                 }
+              }
             //});
              return $result_list;
           } else {
