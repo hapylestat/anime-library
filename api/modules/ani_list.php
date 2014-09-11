@@ -1,34 +1,15 @@
 <?php
 if (!defined('ALIST')) { die('Working hard...'); }
+
+include_once("filters/masks.php");
 /**
  * Anime item of Anime list representation
  */
 class AnimeItem implements JsonSerializable{
   // filters
   private $_dirs;
-  private $_replace_mask = array(
-                         array("/\_/"," "),
-                         array("/\s\s/"," "),
-                         array("/(^[A-Z][a-z\d]+)([A-Z])/","$1 $2"), //add space to sentence like SomeWord
-                         array("/\s\-\s/"," "),
-                         array("/\[[^\[\]]+\]/",""), //old-\[[\d\w\s\-\.\+\&\~]+\]
-                         array("/\([^\(\)]+\)/",""),//\([\d\w\s\-\.\+\&\~]+\)
-                         array("/TV\+OVA/i",""),
-                         array("/TV\+SPECIAL/i",""),
-                         array("/\sTV\s*\-\s*\d/",""),
-                         array("/\sTV\s*\d{1,3}/",""),
-                         array("/\sTV/i",""),
-                         array("/HWP/",""),
-                         array("/OAV/",""),
-                         array("/OVA/",""),
-                         array("/HDRIP/i",""),
-                         array("/\d{1,3}\~\d{1,3}/",""),
-                         array("/\sHD/",""),
-                         array("/\.\w{1,4}$/",""),
-                         array("/\./"," "),
-                         array("/\smovies/i","")
-                        );
-  private $_synonym_mask = "/\{([^\{\}]+)\}/";
+
+
   private $_folder,$_filtered_folder,$_path;
 
   /**
@@ -37,7 +18,7 @@ class AnimeItem implements JsonSerializable{
    * @return string
    */
   protected function normalize_title($title){
-    foreach($this->_replace_mask as $mask){
+    foreach(masks::$filter as $mask){
       $title = preg_replace($mask[0], $mask[1], $title);
     }
     return trim($title);
@@ -63,7 +44,7 @@ class AnimeItem implements JsonSerializable{
   public function __toString(){
     if ($this->_filtered_folder==""){
       $matches=array();
-      if (preg_match($this->_synonym_mask, $this->_folder, $matches) === 1 && count($matches) > 1) {
+      if (preg_match(masks::$filter_custom, $this->_folder, $matches) === 1 && count($matches) > 1) {
         $this->_filtered_folder = $matches[1];
       } else {
        $this->_filtered_folder= $this->normalize_title($this->_folder);

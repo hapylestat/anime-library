@@ -2,24 +2,47 @@
 define('ALIST', 'nyaaa');
 //define('DEVDEBUG', true);
 
-include('config.php');
-include('modules/ani_list.php');
-include('modules/myanimelist.php');
-
+include_once('config.php');
+include_once('modules/ani_list.php');
+include_once('modules/engines/myanimelist.php');
 
 
 // =========== Init script
-$command = array();
-$data = array();
+class Arguments {
+  private $_arglist=Array();
+  private $_filtersets=Array(
+       "word" => "/^[\w]+/",
+       "ext" => "/^[\w\d\s\,\!\'\-\.\:\@\;\&\/]+/i"   // should we try here something better?
+    );
 
-if (!isset($_GET["q"])) $_GET["q"] = "";
-if (!isset($_GET["data"])) $_GET["data"] = "";
+  public function __construct($fields, $exclude_unknown = False){
+    foreach ($_GET as $key => $value){
+      if (array_key_exists($key,$fields)){
+        preg_match($this->_filtersets[$fields[$key]],$value, $value);
+        $value = (count($value) > 0)? $value[0]: "";
+        if ($exclude_unknown) $this->_arglist = array_merge($this->_arglist, Array(strtolower($key) => $value));
+      }
+      if (! $exclude_unknown) $this->_arglist = array_merge($this->_arglist, Array(strtolower($key) => $value));
+    }
+  }
 
-preg_match("/^[\w]+/",$_GET["q"],$command);
-preg_match("/^[\w\d\s\,\!\'\-\.\:\@\;\&\/]+/i",$_GET["data"],$data);
+  public function post_data(){
+    global $HTTP_RAW_POST_DATA;
+    return $HTTP_RAW_POST_DATA;
+  }
 
-$command = (count($command) > 0)? $command[0]: "";
-$data = (count($data) > 0)? $data[0]: "";
+  public function __get($name){
+    if (array_key_exists($name,$this->_arglist)) {
+      return trim($this->_arglist[$name]);
+    }
+    return "";
+  }
+}
+
+$arg=new Arguments(Array(
+   "q" => "word",
+   "data" => "ext"
+  ), true);
 
 // ====main function
 
@@ -56,6 +79,43 @@ function command_info($data){
     }
 }
 
+function command_bulk_info($data){
+  global $MAL_USER,$MAL_PASS,$MAL_API_KEY;
+  $jdata='';
+
+  try {
+      $jdata = json_decode($data);
+  } catch (Exception $e){
+      send_response("fail", "search failed");
+      return;
+  }
+
+  if (count($jdata) == 0) {
+    send_response("fail", "empty query");
+    return;
+  }
+
+  $mal = new MyAnimeList();
+
+  if (! $mal->login($MAL_USER,$MAL_PASS,$MAL_API_KEY, false)){
+   send_response("fail", "MyAnimeList login failed");
+   return;
+  }
+
+  $jresponse= array();
+  foreach ($jdata as $search_name){
+      $r=$mal->search($search_name,  true);
+        if (count($r) > 0) {
+          array_push($jresponse, $r[0]);
+        } else {
+          array_push($jresponse, "");
+        }
+  }
+  send_response("ok",$jresponse, $mal->stats());
+
+}
+
+
 function command_image($data){
   $req=new cURLReq();
   if ($req->cache_check_hit($data,typeImage)){
@@ -74,7 +134,7 @@ function command_image($data){
          header("Content-Type: image/jpeg");
          die($req->cache_get($r[0]->title,typeImage));
       } else {
-        send_response("fail","Nothing found ($data)");
+        send_response("fail","Cache check after search failed ($data)");
       }
     } else {
       send_response("fail","Nothing found ($data)");
@@ -82,27 +142,30 @@ function command_image($data){
   }
 }
 
-
 // == initial request handlers
 function send_response($result, $data, $cache=""){
-  global $command;
+  global $arg;
   die(json_encode(array(
-     "query" => $command,
+     "query" => $arg->q,
      "status" => $result,
      "data" => $data,
      "cache" => $cache
     ),JSON_PRETTY_PRINT));
 }
 
-switch ($command){
+switch ($arg->q){
   case "list":
-   command_list($data);
-   break;
+    command_list($arg->data);
+    break;
+  case "bulk_info":
+    command_bulk_info($arg->post_data());
+    break;
   case "info":
-   command_info($data);
-  break;
-   case "image":
-   command_image($data);
+    command_info($arg->data);
+    break;
+  case "image":
+    command_image($arg->data);
+    break;
   default:
     send_response("fail","Unknown command");
     break;

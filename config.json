@@ -18,6 +18,9 @@
             "bootstrap.min"
         ],
         "app": [
+            "options",
+            "api",
+            "renderer",
             "main"
         ]
     }
