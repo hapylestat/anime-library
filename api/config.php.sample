@@ -1,0 +1,9 @@
+<?php
+if (!defined('ALIST')) { die('Working hard...'); }
+
+$MAL_USER="my-mal-user";
+$MAL_PASS="my-secret-password";
+$MAL_API_KEY="my-api-key";
+$SOURCE_LIST=["source1", "source2"];
+
+?>
