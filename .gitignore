@@ -1,4 +1,4 @@
-cache/data/*
-cache/images/*
-api/config.php
+backend/cache/data/*
+backend/cache/images/*
+backend/api/config.php
 /nbproject/*
