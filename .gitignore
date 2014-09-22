@@ -2,3 +2,4 @@ cache/data/*
 cache/images/*
 api/config.php
 /nbproject/*
+*.iml
