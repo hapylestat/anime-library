@@ -3,3 +3,4 @@ cache/images/*
 api/config.php
 /nbproject/*
 *.iml
+.idea/*
