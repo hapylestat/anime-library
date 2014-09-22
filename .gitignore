@@ -2,5 +2,6 @@ backend/cache/data/*
 backend/cache/images/*
 backend/api/config.php
 /nbproject/*
+*.pyc
 *.iml
 .idea/*
