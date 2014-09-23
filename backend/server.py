@@ -1,12 +1,15 @@
 from flask import Flask
+
 from alist.config import Configuration
 
+
 app = Flask(__name__)
-cfg = Configuration.getInstance()
+cfg = Configuration.get_instance()
+
 
 @app.route("/")
 def main():
-    return "Hello there!"
+    return "%s there!" % cfg.get("test1")
 
 @app.route("/test")
 def test():
