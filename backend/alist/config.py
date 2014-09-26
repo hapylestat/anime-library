@@ -51,7 +51,11 @@ class Configuration:
   def get(self, name):
     self.log.debug("Getting configuration property %s", name)
     if self.__json__ is not None:
-      return self.__json__[name]
+      try:
+        return self.__json__[name]
+      except KeyError:
+        self.log.warning("Key %s not present" % name)
+        raise KeyError
     else:
       return ""
 
