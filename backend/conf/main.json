@@ -2,7 +2,8 @@
     "server": {
       "host": "127.0.0.1",
       "port": 9001,
-      "debug": true
+      "debug": true,
+      "debug_level": 100
     },
     "logging":{
       "log_level": "debug",

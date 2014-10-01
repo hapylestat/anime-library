@@ -1,44 +1,40 @@
-
-
+from alist.helper.singleton import Singleton
 from alist.logger import alogger
 from alist.config import Configuration
 from flask import Flask
+import json
 
 
-
-class Application:
-  # instance store
-  __me__ = None
+@Singleton
+class Application(object):
   # set default values
-  __port = 9000
-  __host = "127.0.0.1"
-  __debug = False
-  __flask = None
+  _settings = {
+    "port": 9000,
+    "host": "127.0.0.1",
+    "debug": False,
+    "debug_level": 0
+  }
+
+  _flask = None
   # init internal objects
   cfg = None
 
-  @classmethod
-  def get_instance(cls):
-    if cls.__me__ is None:
-      cls.__me__ = Application()
-    return cls.__me__
-
   def __init__(self):
     self.cfg = Configuration.get_instance()
-    self.__log = alogger.getLogger(__name__, cfg=self.cfg)
-    self.__apply_settings()
-    self.__flask = Flask(__name__)
+    self._log = alogger.getLogger(__name__, cfg=self.cfg)
+    self._apply_settings()
+    self._flask = Flask(__name__)
 
 
-  def __apply_settings(self):
+  def _apply_settings(self):
     try:
       opt = self.cfg.get("server")
       log_opt = self.cfg.get("logging")
 
-
-      self.__host = opt["host"]
-      self.__port = int(opt["port"])
-      self.__debug = bool(opt["debug"])
+      self._settings["host"] = opt["host"]
+      self._settings["port"] = int(opt["port"])
+      self._settings["debug"] = bool(opt["debug"])
+      self._settings["debug_level"] = int(opt["debug_level"])
 
       # set highest log level for flask to suppress info messages
       if not log_opt["enabled"]:
@@ -47,21 +43,55 @@ class Application:
         flask_logging.getLogger('werkzeug').setLevel(CRITICAL)
 
     except KeyError:
-      self.__log.warning("Server settings not found (%s), use default ones", KeyError)
+      self._log.warning("Server settings not found (%s), use default ones", KeyError)
 
   def start(self):
-    mode = "debug" if self.__debug else "normal"
-    self.__log.info("Starting server in %s mode on %s:%s", mode, self.__host, self.__port)
-    self.__flask.run(host=self.__host,
-                     port=self.__port,
-                     debug=self.__debug
-                     )
+    mode = "debug" if self._settings["debug"] else "normal"
+    self._log.info("Starting server in %s mode on %s:%s", mode, self._settings["host"], self._settings["port"])
+    self._flask.run(host=self._settings["host"],
+                     port=self._settings["port"],
+                     debug=self._settings["debug"]
+                    )
 
-  # Stub to pass decorator back to flask, actually doing same thing as flask decorator
   def route(self, rule, **options):
+    """
+     Stub to pass decorator back to flask, actually doing almost same thing as flask decorator
+
+     Difference is in return value, view can return any value which could pass stringify str() function in debug mode
+     and serialization via json for normal mode
+    """
+    # here is decorator work
     def decorator(f):
+
+      # here we make some trick, and push back only json string, except we are in debug mode
+      def wrapper(*args, **kwargs):
+        try:
+          return json.dumps({
+            'query': rule,
+            'status': 'OK',
+            'data': f(*args, **kwargs)
+          })
+        except Exception as err:
+          import traceback
+          return json.dumps({
+            'query': rule,
+            'status': 'ERROR',
+            'data': str(err)
+          })
+
+      def debbug_wrapper(*args, **kwargs):
+        return str(f(*args, **kwargs))
+
       endpoint = options.pop('endpoint', None)
-      self.__flask.add_url_rule(rule, endpoint, f, **options)
+
+      # for debugging we could ignore json transforms and rest notation
+      if self._settings["debug"] and self._settings["debug_level"] >= 100:
+        debbug_wrapper.__name__ = "%s_wrap" % f.__name__
+        self._flask.add_url_rule(rule, endpoint, debbug_wrapper, **options)
+      else:  # pack response in-to json response as for rest api
+        wrapper.__name__ = "%s_wrap" % f.__name__
+        self._flask.add_url_rule(rule, endpoint, wrapper, **options)
+
       return f
     return decorator
 
