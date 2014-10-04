@@ -44,6 +44,8 @@ class Application(object):
 
     except KeyError:
       self._log.warning("Server settings not found (%s), use default ones", KeyError)
+    except ValueError as err:
+      self._log.error("Was passed unknown or wrong parameters. Please check configuration items, shutting down.")
 
   def start(self):
     mode = "debug" if self._settings["debug"] else "normal"

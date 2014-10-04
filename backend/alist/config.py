@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 from alist.helper.singleton import Singleton
 
@@ -25,7 +26,7 @@ class Configuration(object):
     if self.location.endswith(__package__):
       self.location = self.location[:-len(__package__)-1]
     self._config_path = self.normalize_path("%s/%s" % (self.location, self._config_path))
-    self._log = alogger.getLogger(__name__, default_level=logging.INFO)
+    self._log = alogger.getLogger(__name__, default_level=logging.DEBUG)
     self.load()
 
   def _load_from_configs(self, filename):
@@ -54,12 +55,31 @@ class Configuration(object):
       self._json = json.loads(self._load_from_configs(self._main_config))
       self._log.info("Loaded main settings: %s", self._main_config)
       self._load_modules()
+      # parse command line, currently used for re-assign settings in configuration, but can't be used as replacement
+      self._load_from_commandline()
     except Exception as err:
       self._json = None
       self._log.error("Error in parsing or open config file: %s", err)
       raise err
 
   def _load_modules(self):
+    """
+    Load modules-related configuration listened in modules section
+     Before loading:
+      "modules": {
+      "mal": "myanimelist.json",
+      "ann": "animenewsnetwork.json"
+     }
+     After loading:
+       "modules": {
+        "mal": {
+         ....
+        },
+        "ann": {
+         ....
+        }
+      }
+    """
     if self.is_exists("modules"):
       for item in self._json["modules"]:
         try:
@@ -72,7 +92,41 @@ class Configuration(object):
                            self._json["modules"][item],
                            err)
 
+  def _load_from_commandline(self):
+
+    def parse_one_param(param):
+      self._log.debug("Parse param \'%s\' with value \'%s\'", param[0], param[2])
+      keys = param[0].split('.')
+      if len(keys) > 0 and keys[0] in self._json:
+        item = self._json[keys.pop(0)]
+        for key in keys:
+          if key in item and not isinstance(item[key], (tuple, list)):
+            self._log.debug("Replacing param \"%s\" to value \"%s\"",param[0],param[2])
+            item[key] = param[2]
+          elif key in item and isinstance(item, (tuple, list)):
+            item = item[key]
+          else:
+            self._log.error("Couldn't recognise parameter \'%s\'", param[0])
+            break
+      else:
+        self._log.error("Couldn't recognise parameter \'%s\'", param[0])
+
+    args = sys.argv.copy()  # copy command line list, as we need to modify them slightly
+    if len(args) > 1:
+      args.pop(0)
+      self._log.info("Passed commandline arguments: %s", args)
+
+    for param in args:
+      param = param.partition('=')
+      if len(param) == 3:
+        parse_one_param(param)
+
   def is_exists(self, name):
+    """
+    Check for property existence
+    :param name: property name
+    :return:
+    """
     if self._json is None:
       return False
 
@@ -82,7 +136,12 @@ class Configuration(object):
     return False
 
   def get(self, name):
-    self._log.debug("Getting configuration property %s", name)
+    """
+    Get option property
+    :param name: name of the property
+    :return:
+    """
+    #self._log.debug("Getting configuration property %s", name)
     if self._json is not None:
       try:
         return self._json[name]
