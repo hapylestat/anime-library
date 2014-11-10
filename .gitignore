@@ -5,3 +5,4 @@ backend/api/config.php
 *.pyc
 *.iml
 .idea/*
+.c9/*

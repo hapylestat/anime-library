@@ -111,7 +111,7 @@ class Configuration(object):
       else:
         self._log.error("Couldn't recognise parameter \'%s\'", param[0])
 
-    args = sys.argv.copy()  # copy command line list, as we need to modify them slightly
+    args = list(sys.argv)  # copy command line list, as we need to modify them slightly
     if len(args) > 1:
       args.pop(0)
       self._log.info("Passed commandline arguments: %s", args)
