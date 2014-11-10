@@ -12,7 +12,6 @@ def load():
   Compatible: Python 2.7, 3.x
   """
   import os
-  from importlib import import_module
   from alist.logger import alogger
   from alist.config import Configuration
 
@@ -33,5 +32,5 @@ def load():
   log.debug("Loading filtered list of views in the namespace %s: %s", __name__, mod_list)
 
   for mod in mod_list:
-    import_module(mod)
+    __import__(mod, globals(), locals(), [], 0)
 
