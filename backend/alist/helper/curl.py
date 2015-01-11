@@ -8,7 +8,52 @@ else:
   from urllib import urlencode
 
 
-def curl(url, params=None, auth=None, req_type="GET", data=None, headers=None):
+class CURLResponse(object):
+  def __init__(self, director_open_result):
+    self._code = director_open_result.code
+    self._headers = director_open_result.info()
+    self._content = director_open_result.read()
+
+  @property
+  def code(self):
+    return self._code
+
+  @property
+  def headers(self):
+    return self._headers
+
+  @property
+  def content(self):
+    return self._content
+
+
+class CURLAuth(object):
+  def __init__(self, user, password):
+    self._user = user
+    self._password = password
+
+  @property
+  def user(self):
+    return self._user
+
+  @property
+  def password(self):
+    return self._password
+
+
+def curl(url: str, params: dict=None, auth: CURLAuth=None,
+         req_type: ['GET', 'PUT', 'POST', 'DELETE']='GET',
+         data=None, headers: dict=None) -> CURLResponse:
+  """
+  Make request to web resource
+  :param url: Url to endpoint
+  :param params: list of params after "?"
+  :param auth: authorization tokens
+  :param req_type: type of the request
+  :param data: data which need to be posted
+  :param headers: headers which would be posted with request
+  :return: Response object
+  """
   post_req = ["POST", "PUT"]
   get_req = ["GET", "DELETE"]
 
@@ -45,10 +90,7 @@ def curl(url, params=None, auth=None, req_type="GET", data=None, headers=None):
     req = Request(url, headers=_headers)
 
   req.get_method = lambda: req_type
-  result = director.open(req)
 
-  return {
-    "httpcode": result.code,
-    "headers": result.info(),
-    "content": result.read()
-  }
+  return CURLResponse(
+    director.open(req)
+  )
