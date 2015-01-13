@@ -1,14 +1,14 @@
 import os
 import sys
 import json
-from alist.helper.singleton import Singleton
+from alist.helper.singleton import Singleton, SingletonObject
 
 from alist.logger import alogger
 import logging
 
 
 @Singleton
-class Configuration(object):
+class Configuration(SingletonObject):
   location = ""
   _log = None
   _config_path = "conf/"

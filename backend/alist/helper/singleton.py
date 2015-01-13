@@ -1,6 +1,6 @@
 
 
-class Singleton:
+class Singleton(object):
 
   def __init__(self, decorated):
     self._decorated = decorated
@@ -17,3 +17,8 @@ class Singleton:
 
   def __instancecheck__(self, inst):
     return isinstance(inst, self._decorated)
+
+
+class SingletonObject(object):
+  def get_instance(self):
+    return self

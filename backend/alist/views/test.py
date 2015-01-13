@@ -4,6 +4,7 @@ from flask import request
 
 app = main.Application.get_instance()
 
+
 @app.route("/test")
 def view_test():
   try:
@@ -12,6 +13,7 @@ def view_test():
     app.aa = 1
 
   return "This is a TEST! %s <br> %s" % (app.aa, request.args.to_dict())
+
 
 @app.route("/test/<name>")
 def view_test_name(name):
