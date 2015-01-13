@@ -28,6 +28,7 @@ class Application(SingletonObject):
     self._flask = Flask(__name__)
     self._flask.register_error_handler(404, self._error_404_handler)
     self._flask.register_error_handler(500, self._error_500_handler)
+    self._response_wrapper = ResponseWrapperFactory.get_wrapper(self._settings["output"])
 
   def _apply_settings(self):
     try:
@@ -63,10 +64,10 @@ class Application(SingletonObject):
                     )
 
   def _error_404_handler(self, e):
-    return ResponseWrapperFactory.get_wrapper(self._settings["output"]).response_http_exception("", 404, Exception("Not found")), 404
+    return self._response_wrapper.response_http_exception("", 404, Exception("Not found")), 404
 
   def _error_500_handler(self, e):
-    return ResponseWrapperFactory.get_wrapper(self._settings["output"]).response_http_exception("", 500, e), 500
+    return self._response_wrapper.response_http_exception("", 500, e), 500
 
   def route(self, rule, **options):
     """
@@ -80,7 +81,7 @@ class Application(SingletonObject):
 
       # here we make some trick, and push back only json string, except we are in debug mode
       def wrapper(*args, **kwargs):
-        return ResponseWrapperFactory.get_wrapper(self._settings["output"]).response_by_function_call(rule, f, *args, **kwargs)
+        return self._response_wrapper.response_by_function_call(rule, f, *args, **kwargs)
 
       endpoint = options.pop('endpoint', None)
       wrapper.__name__ = "%s_wrap" % f.__name__
