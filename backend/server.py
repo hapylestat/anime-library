@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
-import alist.controller.main as main
+from alist.controller.main import Application
 import alist.views
 
-app = main.Application.get_instance()
-alist.views.load()
 
+def main():
+    app = Application.get_instance()
+    alist.views.load()
 
+    app.start()
 
 if __name__ == "__main__":
-    app.start()
+    main()

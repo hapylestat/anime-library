@@ -15,9 +15,6 @@ class Configuration(SingletonObject):
   _main_config = "main.json"
   _json = None
 
-  def get_logger_path(self):
-    return self.normalize_path("/tmp/alist.log")  # ToDo: avoid hardcode
-
   def normalize_path(self, path):
     return path.replace('/', os.path.sep)
 
@@ -80,7 +77,7 @@ class Configuration(SingletonObject):
         }
       }
     """
-    if self.is_exists("modules"):
+    if self.exists("modules"):
       for item in self._json["modules"]:
         try:
           json_data = json.loads(self._load_from_configs(self._json["modules"][item]))
@@ -101,7 +98,7 @@ class Configuration(SingletonObject):
         item = self._json[keys.pop(0)]
         for key in keys:
           if key in item and not isinstance(item[key], (tuple, list)):
-            self._log.debug("Replacing param \"%s\" to value \"%s\"",param[0],param[2])
+            self._log.debug("Replacing param \"%s\" to value \"%s\"", param[0], param[2])
             item[key] = param[2]
           elif key in item and isinstance(item, (tuple, list)):
             item = item[key]
@@ -121,32 +118,43 @@ class Configuration(SingletonObject):
       if len(param) == 3:
         parse_one_param(param)
 
-  def is_exists(self, name):
+  def exists(self, path):
     """
     Check for property existence
-    :param name: property name
+    :param path: path to the property with name including
     :return:
     """
     if self._json is None:
       return False
 
-    if name in self._json:
-      return True
+    node = self._json
+    path = path.split('.')
+    while len(path) > 0:
+      path_item = path.pop(0)
+      if path_item in node and len(path) == 0:
+        return True
+      elif path_item in node and len(path) > 0:
+        node = node[path_item]
+      else:
+        return False
 
     return False
 
-  def get(self, name):
+  def get(self, path):
     """
     Get option property
-    :param name: name of the property
+    :param path: full path to the property with name
     :return:
     """
-    #self._log.debug("Getting configuration property %s", name)
     if self._json is not None:
+      path = path.split('.')
       try:
-        return self._json[name]
+        node = self._json
+        while len(path) > 0:
+          node = node[path.pop(0)]
+        return node
       except KeyError:
-        self._log.warning("Key %s not present" % name)
+        self._log.warning("Key %s not present" % ".".join(path))
         raise KeyError
     else:
       return ""
@@ -156,7 +164,7 @@ class Configuration(SingletonObject):
      Return module configuration loaded from separate file or None
     """
     self._log.debug("Getting module configuration %s", name)
-    if self.is_exists("modules"):
+    if self.exists("modules"):
       if name in self._json["modules"] and not isinstance(self._json["modules"][name], str):
         return self._json["modules"][name]
     return None

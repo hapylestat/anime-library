@@ -3,53 +3,61 @@ import sys
 import logging
 from os import environ
 
+from logging.handlers import RotatingFileHandler
 
-#from logging.handlers import RotatingFileHandler
 
 class alogger:
 
   @staticmethod
-  def getLogger(name, cfg=None, default_level=None):
-    is_enabled = True
+  def getLogger(name: str, cfg=None, default_level=None):
+    _log_options = {  # default log options
+      "log_level": default_level,
+      #  enable logging by default if configuration or default log level is set
+      "enabled": cfg is not None or default_level is not None,
+      #  Output log to tty if logging is possible
+      "tty": True and (cfg is not None or default_level is not None)
+    }
     log = logging.getLogger(name)
-    handlers = alogger.getHandlers()
 
-    if cfg is None and default_level is not None:
-      log.setLevel(default_level)
+    # set log level for the instance from default one passed in case, if no configuration available
+    if cfg is None and _log_options["log_level"] is not None:
+      log.setLevel(_log_options["log_level"])
 
     try:
-      if cfg is not None:
-        log_cfg = cfg.get("logging")
-        alogger.setLogLevel(log, log_cfg["log_level"])
-        is_enabled = log_cfg["enabled"]
+      if cfg is not None and cfg.exists("logging"):
+        _log_options = cfg.get("logging")
+        alogger.setLogLevel(log, _log_options["log_level"])
     except KeyError:
       pass
 
     # hack, print logs only for reloaded thread
     if environ.get('WERKZEUG_RUN_MAIN') != 'true':
-      is_enabled = False
+      _log_options["enabled"] = False
 
-    if is_enabled:
-      for handler in handlers:
-        log.addHandler(handler)
-    else:
-      log.addHandler(logging.NullHandler())
+    for handler in alogger.getHandlers(_log_options):
+      log.addHandler(handler)
 
     return log
 
   @staticmethod
-  def getHandlers():
+  def getHandlers(options: dict):
     new_format = logging.Formatter('%(levelname)s %(asctime)s %(filename)s:%(lineno)d - %(message)s')
-    handlers = [
+    handlers = []
+
+    # return Null handler if logging is not allowed
+    if "enabled" in options and not options["enabled"]:
+      handlers.append(logging.NullHandler())
+      return handlers
 
     # output error handler
-    logging.StreamHandler(sys.stderr)
+    if "tty" in options and options["tty"]:
+     handlers.append(logging.StreamHandler(sys.stderr))
 
-    # uncomment to allow file output handler
-    # RotatingFileHandler(cfg.getLoggerPath(), "a")
+    if "file" in options and options["file"].strip() != "":
+      # uncomment to allow file output handler
+      handlers.append(RotatingFileHandler(options["file"], "a"))
 
-    ]
-    # assign same format output to handler
+    # assign same format output to handlers
     for item in handlers:
       item.setFormatter(new_format)
 

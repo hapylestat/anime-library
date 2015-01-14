@@ -18,7 +18,7 @@ def load():
   log = alogger.getLogger(__name__, cfg=Configuration.get_instance())
   mods = []
   mod_list = os.listdir(os.path.dirname(__file__))
-  log.debug("List of available modules in namespace %s found: %s", __name__, mod_list)
+  #log.debug("List of available modules in namespace %s found: %s", __name__, mod_list)
 
   for i in mod_list:
     mods.append("%s.%s" % (__name__, i.split('.')[0]))

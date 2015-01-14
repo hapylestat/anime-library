@@ -7,9 +7,9 @@
     },
     "logging":{
       "log_level": "debug",
-      "enabled": true
-    },
-    "source":{
+      "enabled": true,
+      "file": "",
+      "tty": true
     },
     "modules": {
         "mal": "myanimelist.json",
