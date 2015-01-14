@@ -4,7 +4,6 @@ import json
 from alist.helper.singleton import Singleton, SingletonObject
 
 from alist.logger import alogger
-import logging
 
 
 @Singleton
@@ -23,7 +22,7 @@ class Configuration(SingletonObject):
     if self.location.endswith(__package__):
       self.location = self.location[:-len(__package__)-1]
     self._config_path = self.normalize_path("%s/%s" % (self.location, self._config_path))
-    self._log = alogger.getLogger(__name__, default_level=logging.DEBUG)
+    self._log = alogger.getLogger(__name__, default_level="debug")
     self.load()
 
   def _load_from_configs(self, filename):

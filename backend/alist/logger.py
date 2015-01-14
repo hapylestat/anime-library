@@ -21,7 +21,7 @@ class alogger:
 
     # set log level for the instance from default one passed in case, if no configuration available
     if cfg is None and _log_options["log_level"] is not None:
-      log.setLevel(_log_options["log_level"])
+      alogger.setLogLevel(log, _log_options["log_level"])
 
     try:
       if cfg is not None and cfg.exists("logging"):
@@ -65,15 +65,10 @@ class alogger:
 
   @staticmethod
   def setLogLevel(log, level):
-    if level.lower().strip() == "info":
-      log.setLevel(logging.INFO)
-    elif level.lower().strip() == "critical":
-      log.setLevel(logging.CRITICAL)
-    elif level.lower().strip() == "error":
-      log.setLevel(logging.ERROR)
-    elif level.lower().strip() == "debug":
-      log.setLevel(logging.DEBUG)
-    elif level.lower().strip() == "warning":
-      log.setLevel(logging.WARNING)
+    level = level.upper().strip()
+    if level in logging._nameToLevel:
+      log.setLevel(logging._nameToLevel[level])
     else:
       log.setLevel(logging.NOTSET)
+
+
