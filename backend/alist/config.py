@@ -42,7 +42,6 @@ class Configuration(SingletonObject):
     else:
       self._log.error("File not found: %s", config_filename)
 
-
   def load(self):
     """
      Load application configuration
@@ -139,22 +138,39 @@ class Configuration(SingletonObject):
 
     return False
 
-  def get(self, path):
+  def get(self, path: str, default=None, check_type: type=None):
     """
     Get option property
     :param path: full path to the property with name
+    :param default: default value if original is not present
+    :param check_type: cast param to passed type, if fail, default will returned
     :return:
     """
     if self._json is not None:
-      path = path.split('.')
+      path_data = path.split('.')
       try:
         node = self._json
-        while len(path) > 0:
-          node = node[path.pop(0)]
-        return node
+        while len(path_data) > 0:
+          node = node[path_data.pop(0)]
+
+        if check_type is not None:
+          return check_type(node)
+        else:
+          return node
       except KeyError:
-        self._log.warning("Key %s not present" % ".".join(path))
-        raise KeyError
+        if default is not None:
+          self._log.warning("Key %s not present, using default %s" % (path, default))
+          return default
+        else:
+          self._log.error("Key %s not present" % path)
+          raise KeyError
+      except ValueError:
+        if default is not None:
+          self._log.warning("Key %s has a wrong format, using default %s" % (path, default))
+          return default
+        else:
+          self._log.error("Key %s has a wrong format" % path)
+          raise KeyError
     else:
       return ""
 

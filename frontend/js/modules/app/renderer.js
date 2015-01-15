@@ -62,7 +62,7 @@ var render = {
            $.extend({}, vex.dialog.buttons.NO, {
             text: 'Close'
           })
-        ],
+        ]
       });
   }
 

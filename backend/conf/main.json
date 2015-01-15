@@ -2,12 +2,26 @@
     "server": {
       "host": "127.0.0.1",
       "port": 9001,
-      "debug": true,
-      "debug_level": 50
+      "api": {
+        "enable_jsonp": false,
+        "endpoint": "/api"
+      },
+      "static": {
+        "enabled": true,
+        "endpoint": "/",
+        "index": "index.html",
+        "path": "../../../frontend"
+      },
+      "debug":{
+        "external_debug": true,
+        "enabled": true,
+        "debug_level": 50
+      }
     },
     "logging":{
       "log_level": "debug",
       "enabled": true,
+      "url_log": true,
       "file": "",
       "tty": true
     },

@@ -17,21 +17,18 @@ class alogger:
       #  Output log to tty if logging is possible
       "tty": True and (cfg is not None or default_level is not None)
     }
+    flask_reload = True
     log = logging.getLogger(name)
 
-    # set log level for the instance from default one passed in case, if no configuration available
-    if cfg is None and _log_options["log_level"] is not None:
-      alogger.setLogLevel(log, _log_options["log_level"])
-
-    try:
-      if cfg is not None and cfg.exists("logging"):
-        _log_options = cfg.get("logging")
-        alogger.setLogLevel(log, _log_options["log_level"])
-    except KeyError:
-      pass
+    if cfg is not None:
+      alogger.setLogLevel(log, cfg.get("logging.log_level", default=default_level, check_type=str))
+      flask_reload = not cfg.get("server.debug.external_debug", default=not flask_reload, check_type=bool)
+    else:
+      # set log level for the instance from default one passed in case, if no configuration available
+      _log_options["log_level"] is not None and alogger.setLogLevel(log, _log_options["log_level"])
 
     # hack, print logs only for reloaded thread
-    if environ.get('WERKZEUG_RUN_MAIN') != 'true':
+    if flask_reload and environ.get('WERKZEUG_RUN_MAIN') != 'true':
       _log_options["enabled"] = False
 
     for handler in alogger.getHandlers(_log_options):
