@@ -21,8 +21,9 @@ class Configuration(SingletonObject):
     self.location = os.path.dirname(os.path.abspath(__file__))
     if self.location.endswith(__package__):
       self.location = self.location[:-len(__package__)-1]
+
+    self._log = alogger.getLogger(__name__, default_level="error")  # initial logger
     self._config_path = self.normalize_path("%s/%s" % (self.location, self._config_path))
-    self._log = alogger.getLogger(__name__, default_level="debug")
     self.load()
 
   def _load_from_configs(self, filename):
@@ -48,6 +49,7 @@ class Configuration(SingletonObject):
     """
     try:
       self._json = json.loads(self._load_from_configs(self._main_config))
+      self._log = alogger.getLogger(__name__, cfg=self)  # reload logger using loaded configuration
       self._log.info("Loaded main settings: %s", self._main_config)
       self._load_modules()
       # parse command line, currently used for re-assign settings in configuration, but can't be used as replacement

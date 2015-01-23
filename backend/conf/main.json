@@ -4,10 +4,10 @@
       "port": 9001,
       "api": {
         "enable_jsonp": false,
-        "endpoint": "/api"
+        "endpoint": "/"
       },
       "static": {
-        "enabled": true,
+        "enabled": false,
         "endpoint": "/",
         "index": "index.html",
         "path": "../../../frontend"
@@ -26,7 +26,8 @@
       "tty": true
     },
     "modules": {
-        "mal": "myanimelist.json",
-        "ann": "animenewsnetwork.json"
+      "mal": "myanimelist.json",
+      "ann": "animenewsnetwork.json",
+      "storage": "storage.json"
     }
 }

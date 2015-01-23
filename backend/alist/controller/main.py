@@ -55,6 +55,8 @@ class Application(SingletonObject):
       self._settings["static_path"] = self.cfg.get("server.static.path", default="", check_type=str)
       self._settings["static_index"] = self.cfg.get("server.static.index", default="", check_type=str)
 
+      if self._settings["api_endpoint"][-1:] == "/":
+        self._settings["api_endpoint"] = self._settings["api_endpoint"][:-1]
       # set highest log level for flask to suppress info messages
       if not self.cfg.get("logging.enabled", default=False, check_type=bool):
         from flask import logging as flask_logging

@@ -11,17 +11,18 @@ class alogger:
   @staticmethod
   def getLogger(name: str, cfg=None, default_level=None):
     _log_options = {  # default log options
-      "log_level": default_level,
+      "log_level": default_level if default_level is not None else "debug",
       #  enable logging by default if configuration or default log level is set
       "enabled": cfg is not None or default_level is not None,
       #  Output log to tty if logging is possible
       "tty": True and (cfg is not None or default_level is not None)
     }
+
     flask_reload = True
     log = logging.getLogger(name)
 
     if cfg is not None:
-      alogger.setLogLevel(log, cfg.get("logging.log_level", default=default_level, check_type=str))
+      alogger.setLogLevel(log, cfg.get("logging.log_level", default=_log_options["log_level"], check_type=str))
       flask_reload = not cfg.get("server.debug.external_debug", default=not flask_reload, check_type=bool)
     else:
       # set log level for the instance from default one passed in case, if no configuration available
