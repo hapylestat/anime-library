@@ -3,7 +3,11 @@ backend/cache/data/*
 backend/cache/images/*
 
 #exclude samples of config files but include all others
+<<<<<<< HEAD
+!backend/conf/sample/*.sample.json
+=======
 !backend/conf/*.sample.json
+>>>>>>> dad20d0... - delete obsolete files
 backend/conf/*.json
 
 #incluce compiled python files, idea project files, c9 cloud files
