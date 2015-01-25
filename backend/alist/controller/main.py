@@ -30,6 +30,7 @@ class Application(SingletonObject):
     self._apply_settings()
     self._flask = Flask(__name__)
     self._flask.register_error_handler(404, self._error_404_handler)
+    self._flask.register_error_handler(405, self._error_405_handler)
     self._flask.register_error_handler(500, self._error_500_handler)
     self._response_wrapper = ResponseWrapperFactory.get_wrapper(self._settings["output"])
 
@@ -57,6 +58,7 @@ class Application(SingletonObject):
         "storage_api_enabled": self.cfg.get("server.storage-api.enabled", default=False, check_type=bool),
         "storage_api_secret": self.cfg.get("server.storage-api.secret", default="", check_type=str),
         "storage_module": self.cfg.get("server.storage-api.storage-module", default="storage", check_type=str),
+        "storage_api_check_token": self.cfg.get("server.storage-api.check_token", default=True, check_type=bool),
         "endpoints": {
           "api": self.cfg.get("server.api.endpoint", default="/api", check_type=str),
           "static": self.cfg.get("server.static.endpoint", default="/", check_type=str),
@@ -124,6 +126,9 @@ class Application(SingletonObject):
   def _error_500_handler(self, e):
     return self._response_wrapper.response_http_exception("", 500, e), 500
 
+  def _error_405_handler(self, e):
+    return self._response_wrapper.response_http_exception("", 405, e), 405
+
   def route(self, rule, **options):
     """
      Stub to pass decorator back to flask, actually doing almost same thing as flask decorator
@@ -143,6 +148,13 @@ class Application(SingletonObject):
       req_args = request.args.to_dict()
       if 'args' in f.__code__.co_varnames:
         kwargs["args"] = req_args
+      if 'headers_dict' in f.__code__.co_varnames:
+        headers = {}
+        for item in request.headers:
+          headers.update({item[0]: item[1]})
+        kwargs["headers_dict"] = headers
+      if 'headers' in f.__code__.co_varnames:
+        kwargs["headers"] = request.headers
 
       if self._settings["enable_jsonp"] and 'jsonp' in req_args:
         return ResponseWrapperFactory.get_wrapper("jsonp").response_by_function_call(request.path, f, flags={'callback': req_args["jsonp"]}, *args, **kwargs)

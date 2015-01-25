@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 
 from alist.config import Configuration
 
@@ -16,9 +17,18 @@ class NoLocationProvidedException(Exception):
 
 
 class ProviderProperties(object):
-  def __init__(self, location=None, level=None):
-    self._location = str(location) if location is not None else location
+  def __init__(self, location=None, level=None, service=None, secret=None, add_trailing_slash=True):
+    if location is not None and add_trailing_slash:
+      if location[-len(os.sep):] != os.sep:
+        self._location = str(location + os.sep)
+      else:
+        self._location = str(location)
+    else:
+      self._location = str(location) if location is not None else location
+
     self._level = int(level) if level is not None else level
+    self._service = str(service) if service is not None else service
+    self._secret = str(secret) if secret is not None else secret
 
   @property
   def location(self):
@@ -27,6 +37,14 @@ class ProviderProperties(object):
   @property
   def level(self):
     return self._level
+
+  @property
+  def service(self):
+    return self._service
+
+  @property
+  def secret(self):
+    return self._secret
 
 
 class AbstractProvider(object):

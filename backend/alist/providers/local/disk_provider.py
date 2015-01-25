@@ -37,7 +37,6 @@ class DiskProvider(AbstractProvider):
      folder = self._get_folder(data, loc_root)
      folder.update(self._make_folder_item(path=root, files=files))
 
-    storage["data"] = data
     return data
 
   def _get_storage(self, name: str, storage: dict, properties: ProviderProperties):

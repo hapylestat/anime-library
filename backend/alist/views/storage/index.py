@@ -6,6 +6,7 @@ from alist.helper.token import TokenHelper
 app = Application.get_instance()
 storage = DiskProvider()
 token = TokenHelper(app._settings["storage_api_secret"])
+check_token = app._settings["storage_api_check_token"]
 
 
 def __init__():
@@ -26,23 +27,25 @@ def __init__():
   if rule == "":
     rule = "/storage"
 
-  app.add_route(rule=rule, f=main)
+  app.add_route(rule=rule, f=main, methods=['GET'])
 
 
-def main(args):
+def main(args, headers):
+  global check_token
+  if check_token:
+    key = headers.get('access_key')
+    if key is None:
+      raise Exception('Access denied, no key found')
+    token.parse_token(key)  # check if token is valid
+
   action = args["q"] if "q" in args else "list"
   store = args["storage"] if "storage" in args else "none"
-
   if action == "list":
     return storage_list()
   if action == "view":
     return storage_view(store)
-  if action == "test":
-    t = token.make_token({"fs": "fds"})
-    return {
-      "make": t,
-      "decode": token.parse_token(t)
-    }
+
+  raise Exception("Unknown action")
 
 
 def storage_view(store: str):

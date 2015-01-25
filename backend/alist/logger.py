@@ -51,6 +51,7 @@ class alogger:
     if cfg is not None:
       alogger.setLogLevel(log, cfg.get("logging.log_level", default=_log_options["log_level"], check_type=str))
       flask_reload = not cfg.get("server.debug.external_debug", default=not flask_reload, check_type=bool)
+      _log_options["file"] = cfg.get("logging.file", default="", check_type=str)
     else:
       # set log level for the instance from default one passed in case, if no configuration available
       _log_options["log_level"] is not None and alogger.setLogLevel(log, _log_options["log_level"])

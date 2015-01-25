@@ -1,0 +1,41 @@
+{
+    "server": {
+      "host": "127.0.0.1",
+      "port": 9001,
+      "api": {
+        "enabled": true,
+        "enable_jsonp": false,
+        "endpoint": "/"
+      },
+      "static": {
+        "enabled": false,
+        "endpoint": "/",
+        "index": "index.html",
+        "path": "../../../frontend"
+      },
+      "storage-api" :{
+        "enabled": false,
+        "secret": "",
+        "check_token": false,
+        "endpoint": "/storage",
+        "storage-module": "storage"
+      },
+      "debug":{
+        "external_debug": true,
+        "enabled": true,
+        "debug_level": 50
+      }
+    },
+    "logging":{
+      "log_level": "debug",
+      "enabled": true,
+      "url_log": true,
+      "file": "",
+      "tty": true
+    },
+    "modules": {
+      "mal": "myanimelist.json",
+      "ann": "animenewsnetwork.json",
+      "storage": "storage.json"
+    }
+}
