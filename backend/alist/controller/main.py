@@ -1,10 +1,10 @@
+from flask import Flask, request
+
 from alist.helper.singleton import Singleton, SingletonObject
 from alist.logger import alogger
 from alist.config import Configuration
 from alist.controller.output_wrappers import ResponseWrapperFactory
-
-from os import environ
-from flask import Flask, request
+import alist.views
 
 
 @Singleton
@@ -43,20 +43,30 @@ class Application(SingletonObject):
 
   def _apply_settings(self):
     try:
-      self._settings["host"] = self.cfg.get("server.host", check_type=str)
-      self._settings["port"] = self.cfg.get("server.port", default=9000, check_type=int)
-      self._settings["debug"] = self.cfg.get("server.debug.enabled", default=False, check_type=bool)
-      self._settings["external_debug"] = self.cfg.get("server.debug.external_debug", default=False, check_type=bool)
-      self._settings["debug_level"] = self.cfg.get("server.debug.debug_level", default=0, check_type=int)
-      self._settings["enable_jsonp"] = self.cfg.get("server.api.enable_jsonp", default=False, check_type=bool)
-      self._settings["api_endpoint"] = self.cfg.get("server.api.endpoint", default="", check_type=str)
-      self._settings["static_endpoint"] = self.cfg.get("server.static.endpoint", default="", check_type=str)
-      self._settings["static_enabled"] = self.cfg.get("server.static.enabled", default=False, check_type=bool)
-      self._settings["static_path"] = self.cfg.get("server.static.path", default="", check_type=str)
-      self._settings["static_index"] = self.cfg.get("server.static.index", default="", check_type=str)
+      self._settings.update({
+        "host": self.cfg.get("server.host", check_type=str),
+        "port": self.cfg.get("server.port", default=9000, check_type=int),
+        "debug": self.cfg.get("server.debug.enabled", default=False, check_type=bool),
+        "external_debug": self.cfg.get("server.debug.external_debug", default=False, check_type=bool),
+        "debug_level": self.cfg.get("server.debug.debug_level", default=0, check_type=int),
+        "enable_jsonp": self.cfg.get("server.api.enable_jsonp", default=False, check_type=bool),
+        "api_enabled": self.cfg.get("server.api.enabled", default=True, check_type=bool),
+        "static_enabled": self.cfg.get("server.static.enabled", default=False, check_type=bool),
+        "static_path": self.cfg.get("server.static.path", default="", check_type=str),
+        "static_index": self.cfg.get("server.static.index", default="", check_type=str),
+        "storage_api_enabled": self.cfg.get("server.storage-api.enabled", default=False, check_type=bool),
+        "storage_api_secret": self.cfg.get("server.storage-api.secret", default="", check_type=str),
+        "storage_module": self.cfg.get("server.storage-api.storage-module", default="storage", check_type=str),
+        "endpoints": {
+          "api": self.cfg.get("server.api.endpoint", default="/api", check_type=str),
+          "static": self.cfg.get("server.static.endpoint", default="/", check_type=str),
+          "storage": self.cfg.get("server.storage-api.endpoint", default="/storage", check_type=str)
+        }
+      })
+      # ToDo: Check endpoints to be not math one location
 
-      if self._settings["api_endpoint"][-1:] == "/":
-        self._settings["api_endpoint"] = self._settings["api_endpoint"][:-1]
+      if self._settings["endpoints"]["api"][-1:] == "/":
+        self._settings["endpoints"]["api"] = self._settings["endpoints"]["api"][:-1]
       # set highest log level for flask to suppress info messages
       if not self.cfg.get("logging.enabled", default=False, check_type=bool):
         from flask import logging as flask_logging
@@ -90,7 +100,23 @@ class Application(SingletonObject):
       flask_args["use_debugger"] = False
       flask_args["use_reloader"] = False
 
+    self._load_views()
+
+    #start server
     self._flask.run(**flask_args)
+
+  def _load_views(self):
+    exclude_list = []
+    include_list = []
+    if not self._settings["storage_api_enabled"]:
+      exclude_list.append("storage.index")
+    else:
+      include_list.append("storage.index")
+
+    if self._settings["api_enabled"]:
+      alist.views.load(disabled_views=exclude_list)
+    elif len(include_list) > 0:
+      alist.views.load(allowed_views=include_list)
 
   def _error_404_handler(self, e):
     return self._response_wrapper.response_http_exception("", 404, Exception("Not found")), 404
@@ -107,24 +133,27 @@ class Application(SingletonObject):
     """
     # here is decorator work
     def decorator(f):
+      self.add_route(rule, f, **options)
 
-      # here we make some trick, and push back only json string, except we are in debug mode
-      def wrapper(*args, **kwargs):
-        req_args = request.args.to_dict()
-        if 'args' in f.__code__.co_varnames:
-          kwargs["args"] = req_args
-
-        if self._settings["enable_jsonp"] and 'jsonp' in req_args:
-          return ResponseWrapperFactory.get_wrapper("jsonp").response_by_function_call(request.path, f, flags={'callback': req_args["jsonp"]}, *args, **kwargs)
-
-        return self._response_wrapper.response_by_function_call(request.path, f, *args, **kwargs)
-
-      endpoint = options.pop('endpoint', None)
-      wrapper.__name__ = "%s_wrap" % f.__name__
-      self._flask.add_url_rule("%s%s" % (self._settings["api_endpoint"], rule), endpoint, wrapper, **options)
-
-      return f
     return decorator
+
+  def add_route(self, rule, f, **options):
+    # here we make some trick, and push back only json string, except we are in debug mode
+    def wrapper(*args, **kwargs):
+      req_args = request.args.to_dict()
+      if 'args' in f.__code__.co_varnames:
+        kwargs["args"] = req_args
+
+      if self._settings["enable_jsonp"] and 'jsonp' in req_args:
+        return ResponseWrapperFactory.get_wrapper("jsonp").response_by_function_call(request.path, f, flags={'callback': req_args["jsonp"]}, *args, **kwargs)
+
+      return self._response_wrapper.response_by_function_call(request.path, f, *args, **kwargs)
+
+    endpoint = options.pop('endpoint', None)
+    wrapper.__name__ = "%s_wrap" % f.__name__
+    self._flask.add_url_rule("%s%s" % (self._settings["endpoints"]["api"], rule), endpoint, wrapper, **options)
+
+    return f
 
   def serve_static_content(self):
     def static_route(path):
@@ -133,8 +162,8 @@ class Application(SingletonObject):
     def static_index():
       return self._flask.send_static_file(self._settings["static_index"])
 
-    route = "%s/<path:path>" % (self._settings["static_endpoint"] if self._settings["static_endpoint"] != "/" else "")
+    route = "%s/<path:path>" % (self._settings["endpoints"]["static"] if self._settings["endpoints"]["static"] != "/" else "")
 
-    self._flask.add_url_rule(self._settings["static_endpoint"], view_func=static_index)
+    self._flask.add_url_rule(self._settings["endpoints"]["static"], view_func=static_index)
     self._flask.add_url_rule(route, view_func=static_route)
 

@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+
 from flask import Response
 
 
@@ -53,7 +55,8 @@ class JsonWrapper(AbstractWrapper):
 
   @staticmethod
   def response_exception(query: str, exception, headers: dict=None, flags: dict=None):
-    return JsonWrapper.create_response(query, "ERROR", str(exception), headers, flags=flags)
+    error_msg = "Type: %s, Data: %s" % (type(exception).__name__, str(exception))
+    return JsonWrapper.create_response(query, "ERROR", error_msg, headers, flags=flags)
 
   @staticmethod
   def response_http_exception(query: str, http_code: int, exception, flags: dict=None):
@@ -62,7 +65,12 @@ class JsonWrapper(AbstractWrapper):
   @staticmethod
   def response_by_function_call(query: str, func, flags: dict=None, *args, **kwargs):
     try:
-     return JsonWrapper.create_response(query, "OK", func(*args, **kwargs), flags=flags)
+     b_time = datetime.now()
+     data = func(*args, **kwargs)
+     headers = {
+       "execution": str(datetime.now() - b_time)
+     }
+     return JsonWrapper.create_response(query, "OK", data, headers=headers, flags=flags)
     except Exception as e:
      return JsonWrapper.response_exception(query, e, flags=flags)
 
@@ -84,7 +92,12 @@ class JsonpWrapper(JsonWrapper):
   @staticmethod
   def response_by_function_call(query: str, func, flags: dict=None, *args, **kwargs):
     try:
-      return JsonpWrapper.create_response(query, "OK", func(*args, **kwargs), flags=flags)
+      b_time = datetime.now()
+      data = func(*args, **kwargs)
+      headers = {
+        "execution": str(datetime.now() - b_time)
+      }
+      return JsonpWrapper.create_response(query, "OK", data, headers=headers, flags=flags)
     except Exception as e:
       return JsonpWrapper.response_exception(query, e, flags=flags)
 
@@ -110,6 +123,11 @@ class StringWrapper(AbstractWrapper):
   @staticmethod
   def response_by_function_call(query: str, func, flags: dict=None, *args, **kwargs):
     try:
-      return StringWrapper.create_response(query, "OK", func(*args, **kwargs), flags=flags)
+      b_time = datetime.now()
+      data = func(*args, **kwargs)
+      headers = {
+        "execution": str(datetime.now() - b_time)
+      }
+      return StringWrapper.create_response(query, "OK", data, headers=headers, flags=flags)
     except Exception as e:
       return StringWrapper.response_exception(query, e, flags=flags)

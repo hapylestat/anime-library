@@ -5,6 +5,33 @@ from os import environ
 
 from logging.handlers import RotatingFileHandler
 
+CRITICAL = 50
+FATAL = CRITICAL
+ERROR = 40
+WARNING = 30
+WARN = WARNING
+INFO = 20
+DEBUG = 10
+NOTSET = 0
+
+_levelToName = {
+  CRITICAL: 'CRITICAL',
+  ERROR: 'ERROR',
+  WARNING: 'WARNING',
+  INFO: 'INFO',
+  DEBUG: 'DEBUG',
+  NOTSET: 'NOTSET',
+  }
+
+_nameToLevel = {
+  'CRITICAL': CRITICAL,
+  'ERROR': ERROR,
+  'WARN': WARNING,
+  'WARNING': WARNING,
+  'INFO': INFO,
+  'DEBUG': DEBUG,
+  'NOTSET': NOTSET,
+  }
 
 class alogger:
 
@@ -64,9 +91,9 @@ class alogger:
   @staticmethod
   def setLogLevel(log, level):
     level = level.upper().strip()
-    if level in logging._nameToLevel:
-      log.setLevel(logging._nameToLevel[level])
+    if level in _nameToLevel:
+      log.setLevel(_nameToLevel[level])
     else:
-      log.setLevel(logging.NOTSET)
+      log.setLevel(NOTSET)
 
 
