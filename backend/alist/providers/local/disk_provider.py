@@ -28,14 +28,28 @@ class DiskProvider(AbstractProvider):
 
   def _update_storage(self, name: str, storage: dict, properties: ProviderProperties):
     data = {}
+    if properties.level is not None and properties.level == 1:  # little optimization, if we need to scan only top folder
+      dir_all = os.listdir(properties.location)
+      dirs = list(filter(
+        lambda x: os.path.isdir("%s%s%s" % (properties.location, os.sep, x)),
+        dir_all))
+      files = list(filter(lambda x: x not in dirs, dir_all))
+      # create root element
+      folder = self._get_folder(data, "/")
+      folder.update(self._make_folder_item(path=properties.location, files=files))
 
-    for root, folders, files in os.walk(properties.location):
-     loc_root = root.replace(properties.location, '/').replace(os.sep, '/')
-     if properties.level is not None and loc_root.count('/') > properties.level:
-       continue
+      for fld in dirs:
+        folder = self._get_folder(data, "/%s" % fld)
+        folder.update(self._make_folder_item(path="%s%s" % (properties.location, fld), files=[]))
 
-     folder = self._get_folder(data, loc_root)
-     folder.update(self._make_folder_item(path=root, files=files))
+    else:
+      for root, folders, files in os.walk(properties.location):
+       loc_root = root.replace(properties.location, '/').replace(os.sep, '/')
+       if properties.level is not None and loc_root.count('/') > properties.level:
+         continue
+
+       folder = self._get_folder(data, loc_root)
+       folder.update(self._make_folder_item(path=root, files=files))
 
     return data
 

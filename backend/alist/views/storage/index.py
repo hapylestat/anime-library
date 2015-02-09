@@ -17,11 +17,15 @@ def __init__():
     raise Exception("Wrong storage configuration")
 
   for cfg_item in storage_cfg:
+    level = None
+    if "level" in cfg_item:
+      level = cfg_item["level"]
+
     if not isinstance(cfg_item["type"], list):
       cfg_item["type"] = [cfg_item["type"]]
 
     if "local" in cfg_item["type"]:
-      storage.add_storage(cfg_item["name"], ProviderProperties(location=cfg_item["location"]))
+      storage.add_storage(cfg_item["name"], ProviderProperties(location=cfg_item["location"], level=level))
 
   rule = app._settings["endpoints"]["storage"]
   if rule == "":

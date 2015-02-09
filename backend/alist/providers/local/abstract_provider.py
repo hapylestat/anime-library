@@ -23,8 +23,8 @@ class ProviderProperties(object):
         self._location = str(location + os.sep)
       else:
         self._location = str(location)
-    else:
-      self._location = str(location) if location is not None else location
+    elif location is not None:
+      self._location = str(location).replace("..", "")  # exclude cheating with relative patch
 
     self._level = int(level) if level is not None else level
     self._service = str(service) if service is not None else service
@@ -65,6 +65,10 @@ class AbstractProvider(object):
     self._storages = {}
     self._auto_update = auto_update
     self._update_period = self._parsetime(time)
+    self._result_key_items = {
+      "path": "<path>",
+      "files": "<files>"
+    }
 
   def _parsetime(self, time: str):
     t_time = ["0", "0", "0.0"]
@@ -137,8 +141,8 @@ class AbstractProvider(object):
 
   def _make_folder_item(self, path, files):
     return {
-      "#path": path,
-      "#files": files
+      self._result_key_items["path"]: path,
+      self._result_key_items["files"]: files
     }
   # override in child class
   def _add_storage(self, name: str, storage: dict, properties: ProviderProperties):

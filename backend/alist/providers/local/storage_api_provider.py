@@ -1,6 +1,4 @@
-import json
-
-from alist.providers.local.abstract_provider import AbstractProvider, ProviderProperties
+from alist.providers.local.abstract_provider import AbstractProvider, ProviderProperties, StorageNotPresentException
 from alist.logger import alogger
 from alist.config import Configuration
 from alist.helper.curl import curl
@@ -20,15 +18,17 @@ class StorageApiProvider(AbstractProvider):
       headers.update({
         'access_key': TokenHelper(secret).make_token({}, False)
       })
+    try:
+      resp = curl(url, req_type="GET", headers=headers)
+    except TimeoutError:
+      return None
 
-    resp = curl(url, req_type="GET", headers=headers)
     if resp.code != 200:  # check for response code
       self._log.debug("Call to %s failed. Code: %s, Content: %s" % (url, resp.code, resp.content))
       raise Exception("Remote service call failed")
 
-    try:
-      json_response = json.loads(resp.content.decode("utf-8"))  # Try to transform response to json
-    except ValueError:
+    json_response = resp.from_json()
+    if json_response is None:
       self._log.debug("Call to %s failed. Content: %s" % (url, resp.content))
       raise Exception("Remote service call failed")
 
@@ -43,7 +43,7 @@ class StorageApiProvider(AbstractProvider):
       super(StorageApiProvider, self).add_storage(name, properties)
     else:
       storage_list = self._service_call(self._storage_list_url.format(properties.service), properties.secret)
-      if isinstance(storage_list, list):
+      if isinstance(storage_list, list):  # ToDo: implement delayed storage add if remote storage timeout or fail
         for item in storage_list:
           self.add_storage(item,
                            ProviderProperties(
@@ -52,7 +52,7 @@ class StorageApiProvider(AbstractProvider):
                              add_trailing_slash=False
                            ))
       else:
-        raise Exception("Remote storage exception. List failed")
+        raise StorageNotPresentException("Remote storage exception. List failed")
 
   def _add_storage(self, name: str, storage: dict, properties: ProviderProperties):
     pass

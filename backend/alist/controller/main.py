@@ -1,4 +1,10 @@
-from flask import Flask, request
+
+try:
+  from flask import Flask, request, abort
+except ImportError:
+  import sys
+  print("Error. Please install Flask extension before starting this application")
+  sys.exit(-1)
 
 from alist.helper.singleton import Singleton, SingletonObject
 from alist.logger import alogger
@@ -106,6 +112,9 @@ class Application(SingletonObject):
 
     #start server
     self._flask.run(**flask_args)
+
+  def abort(self, code):
+    abort(code)
 
   def _load_views(self):
     exclude_list = []

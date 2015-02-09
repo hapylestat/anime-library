@@ -1,10 +1,13 @@
 
 import sys
+import json
+import base64
+
 if sys.version_info.major == 3:
-  from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener
+  from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
   from urllib.parse import urlencode
 else:
-  from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener
+  from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
   from urllib import urlencode
 
 
@@ -13,6 +16,8 @@ class CURLResponse(object):
     self._code = director_open_result.code
     self._headers = director_open_result.info()
     self._content = director_open_result.read()
+    if isinstance(self._content, bytes):
+      self._content = self._content.decode('utf-8')
 
   @property
   def code(self):
@@ -26,11 +31,18 @@ class CURLResponse(object):
   def content(self):
     return self._content
 
+  def from_json(self):
+    try:
+      return json.loads(self._content)
+    except ValueError:
+      return None
+
 
 class CURLAuth(object):
-  def __init__(self, user, password):
+  def __init__(self, user, password, force=False):
     self._user = user
     self._password = password
+    self._force = force  # Required if remote doesn't support http 401 response
 
   @property
   def user(self):
@@ -39,6 +51,21 @@ class CURLAuth(object):
   @property
   def password(self):
     return self._password
+
+  @property
+  def force(self):
+    return self._force
+
+  def get_header(self):
+    token = "%s:%s" % (self.user, self.password)
+    if sys.version_info.major == 3:
+      token = base64.encodebytes(bytes(token, encoding='utf8')).decode("utf-8")
+    else:
+      token = base64.encodestring(token)
+
+    return {
+      "Authorization": "Basic %s" % token.replace('\n', '')
+    }
 
 
 def curl(url: str, params: dict=None, auth: CURLAuth=None,
@@ -66,10 +93,12 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
   _headers = {}
   handler_chain = []
 
-  if auth is not None:
+  if auth is not None and auth.force is False:
     manager = HTTPPasswordMgrWithDefaultRealm()
-    manager.add_password(None, url, auth["user"], auth["pass"])
+    manager.add_password(None, url, auth.user, auth.password)
     handler_chain.append(HTTPBasicAuthHandler(manager))
+  elif auth is not None and auth.force is True:
+    _headers.update(auth.get_header())
 
   if req_type in post_req and data is not None:
     _headers["Content-Length"] = len(data)
@@ -91,6 +120,12 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
 
   req.get_method = lambda: req_type
 
-  return CURLResponse(
-    director.open(req)
-  )
+  try:
+    return CURLResponse(
+      director.open(req)
+    )
+  except URLError as e:
+    if isinstance(e, HTTPError):
+      raise e
+    else:
+      raise TimeoutError
