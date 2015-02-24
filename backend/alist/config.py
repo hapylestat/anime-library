@@ -94,7 +94,10 @@ class Configuration(SingletonObject):
     def parse_one_param(param):
       self._log.debug("Parse param \'%s\' with value \'%s\'", param[0], param[2])
       keys = param[0].split('.')
-      if len(keys) > 0 and keys[0] in self._json:
+      if len(keys) == 1:  # parse root element
+        self._log.debug("Replacing param \'%s\' to value \'%s\'", keys[0], param[2])
+        self._json[keys[0]] = param[2]
+      elif len(keys) > 0 and keys[0] in self._json:
         item = self._json[keys.pop(0)]
         for key in keys:
           if key in item and not isinstance(item[key], (tuple, list)):
