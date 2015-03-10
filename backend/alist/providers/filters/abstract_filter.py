@@ -18,14 +18,19 @@ class AbstractFilter(object):
   _c_replace = "replace"
   _c_level = "level"
   _c_order = "order"
+  _c_case = "ignore-case"
 
   def __init__(self, filters: list):
     self._filter_types = {
-      "str": self._filter
+      "str": self._base_string_filter
     }
 
     if filters is None:
       raise ValueError("Filters args can't be none")
+
+    # "magic" filter
+    self._magic_filter = re.compile("\{([^\{\}]+)\}")
+
     self._parse_filter(filters)
 
   def _parse_filter(self, filters: list):
@@ -36,9 +41,18 @@ class AbstractFilter(object):
         item.update({self._c_order: 0})
       if self._c_replace not in item:
         item.update({self._c_replace: ""})
-      item.update({
-       self._c_compiled_filter: re.compile(item[self._c_filter])
-      })
+      if self._c_case not in item:
+        item.update({self._c_case: False})
+
+      # compile pattern with ignore-case flag
+      if item[self._c_case]:
+        item.update({
+          self._c_compiled_filter: re.compile(item[self._c_filter], re.IGNORECASE)
+        })
+      else:
+        item.update({
+         self._c_compiled_filter: re.compile(item[self._c_filter])
+        })
 
       return item
     # step 1. Add missing keys with defaults, pre-compile regexp
@@ -54,7 +68,13 @@ class AbstractFilter(object):
     else:
       raise ValueError("Can't filter type %s, support only: %s" % (item_type, ",".join(self._filter_types.keys())))
 
-  def _filter(self, item: str):
-    for f in self._filters:
-      item = re.sub(f[self._c_compiled_filter], f[self._c_replace], item)
+  def _base_string_filter(self, item: str):
+    math_magic = re.search(self._magic_filter, item)
+    if math_magic:
+      g = math_magic.groups()
+      if len(g) > 0:
+        return g[0]
+    else:
+      for f in self._filters:
+        item = re.sub(f[self._c_compiled_filter], f[self._c_replace], item)
     return item.strip()

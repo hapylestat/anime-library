@@ -1,0 +1,71 @@
+[
+  {
+    "regex": "\\_",
+    "replace": " "
+  },
+  {
+    "regex": "\\s\\s",
+    "replace": " "
+  },
+  {
+    "regex": "(^[A-Z][a-z\\d]+)([A-Z])",
+    "replace": "\\1 \\2"
+  },
+  {
+    "regex": "\\s\\-\\s",
+    "replace": " "
+  },
+  {
+    "regex": "\\[[^\\[\\]]+\\]"
+  },
+  {
+    "regex": "\\([^\\(\\)]+\\)"
+  },
+  {
+    "regex": "TV\\+OVA"
+  },
+  {
+    "regex": "TV\\+SPECIAL"
+  },
+  {
+    "regex": "\\sTV\\s*\\-\\s*\\d"
+  },
+  {
+    "regex": "\\sTV\\s*\\d{1,3}"
+  },
+  {
+    "regex": "\\sTV"
+  },
+  {
+    "regex": "HWP"
+  },
+  {
+    "regex": "OAV"
+  },
+  {
+    "regex": "OVA"
+  },
+  {
+    "regex": "HDRIP"
+  },
+  {
+    "regex": "\\d{1,3}\\~\\d{1,3}"
+  },
+  {
+    "regex": "\\sHD"
+  },
+  {
+    "regex": "\\.\\w{1,4}$"
+  },
+  {
+    "regex": "\\.",
+    "replace": " "
+  },
+  {
+    "regex": "\\smovies"
+  },
+  {
+    "regex": "\\+special",
+    "ignore-case": true
+  }
+]

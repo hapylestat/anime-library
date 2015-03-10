@@ -53,7 +53,17 @@ class JsonWrapper(AbstractWrapper):
     }
     if json_headers is not None:
       response.update(json_headers)
-    return Response(json.dumps(response), mimetype='application/json', headers=headers)
+
+    _headers = {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    }
+
+    if headers is not None:
+      _headers.update(headers)
+
+    return Response(json.dumps(response), mimetype='application/json', headers=_headers)
 
   @staticmethod
   def response_exception(query: str, exception, json_headers: dict=None, headers: dict=None, flags: dict=None):
@@ -71,7 +81,7 @@ class JsonWrapper(AbstractWrapper):
       headers = {}
       data = func(*args, **kwargs)
       if isinstance(data, tuple):
-        headers = data[0]
+        headers.update(data[0])
         data = data[1]
       json_headers = {
         "execution": str(datetime.now() - b_time)
@@ -103,10 +113,14 @@ class JsonpWrapper(JsonWrapper):
     try:
       b_time = datetime.now()
       data = func(*args, **kwargs)
+      headers = {}
+      if isinstance(data, tuple):
+        headers.update(data[0])
+        data = data[1]
       json_headers = {
         "execution": str(datetime.now() - b_time)
       }
-      return JsonpWrapper.create_response(query, "OK", data, json_headers=json_headers, flags=flags)
+      return JsonpWrapper.create_response(query, "OK", data, json_headers=json_headers, headers=headers, flags=flags)
     except Exception as e:
       tb = ""
       if PRINT_TRACKEROUTE:
@@ -121,11 +135,18 @@ class StringWrapper(AbstractWrapper):
                   <b>Status:</b> %s<br/>
                   <b>Data:</b> %s<br/>""" % (query, status, data)
 
-    if headers is None:
-      headers = {}
+    _headers = {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    }
+
+    if headers is not None:
+      _headers.update(headers)
+
     if json_headers is not None:
       response += "<b>json_headers:</b> %s" % str(json_headers)
-    return Response(response, mimetype='text/html', headers=headers)
+    return Response(response, mimetype='text/html', headers=_headers)
 
   @staticmethod
   def response_exception(query: str, exception, json_headers: dict=None, headers: dict=None, flags: dict=None):

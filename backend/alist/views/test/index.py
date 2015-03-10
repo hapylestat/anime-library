@@ -3,11 +3,11 @@ import alist.controller.main as main
 from alist.providers.local.storage_api_provider import StorageApiProvider, ProviderProperties, StorageNotPresentException
 from alist.providers.local.disk_provider import DiskProvider
 
-from alist.providers.filters.abstract_filter import AbstractFilter
+from alist.providers.filters.store_filter import StoreFilter
 app = main.Application.get_instance()
 store = StorageApiProvider()
 local_store = DiskProvider()
-myfilter = AbstractFilter(app.cfg.get_module_config("storage_filter"))
+myfilter = StoreFilter()
 
 
 def __init__():
@@ -57,11 +57,7 @@ def view_store_disk(args, name):
     s = local_store
 
   if "list" in args:
-    return dict(map(
-      lambda x: (myfilter.filter(x[0]), x[1]),
-      dict(filter(lambda x: x[0] not in s._result_key_items.values(), s.get_storage(name)["/"].items())).items()
-    ))
-
+    return myfilter.filter(s.get_storage(name))
   else:
     return s.get_storage(name)
 
