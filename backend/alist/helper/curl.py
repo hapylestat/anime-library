@@ -39,10 +39,13 @@ class CURLResponse(object):
 
 
 class CURLAuth(object):
-  def __init__(self, user, password, force=False):
+  def __init__(self, user, password, force=False, headers: dict=None):
+
+
     self._user = user
     self._password = password
     self._force = force  # Required if remote doesn't support http 401 response
+    self._headers = headers
 
   @property
   def user(self):
@@ -56,7 +59,17 @@ class CURLAuth(object):
   def force(self):
     return self._force
 
-  def get_header(self):
+  @property
+  def headers(self):
+    if not self._force:
+      return self._headers
+    else:
+      ret_temp = {}
+      ret_temp.update(self._headers)
+      ret_temp.update(self.get_auth_header())
+      return ret_temp
+
+  def get_auth_header(self):
     token = "%s:%s" % (self.user, self.password)
     if sys.version_info.major == 3:
       token = base64.encodebytes(bytes(token, encoding='utf8')).decode("utf-8")
@@ -97,8 +110,9 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
     manager = HTTPPasswordMgrWithDefaultRealm()
     manager.add_password(None, url, auth.user, auth.password)
     handler_chain.append(HTTPBasicAuthHandler(manager))
-  elif auth is not None and auth.force is True:
-    _headers.update(auth.get_header())
+
+  if auth is not None:
+    _headers.update(auth.headers)
 
   if req_type in post_req and data is not None:
     _headers["Content-Length"] = len(data)
