@@ -83,7 +83,7 @@ class CURLAuth(object):
 
 def curl(url: str, params: dict=None, auth: CURLAuth=None,
          req_type: ['GET', 'PUT', 'POST', 'DELETE']='GET',
-         data=None, headers: dict=None) -> CURLResponse:
+         data=None, headers: dict=None, timeout: int=None) -> CURLResponse:
   """
   Make request to web resource
   :param url: Url to endpoint
@@ -135,9 +135,10 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
   req.get_method = lambda: req_type
 
   try:
-    return CURLResponse(
-      director.open(req)
-    )
+    if timeout is not None:
+      return CURLResponse(director.open(req, timeout=timeout))
+    else:
+      return CURLResponse(director.open(req))
   except URLError as e:
     if isinstance(e, HTTPError):
       raise e
