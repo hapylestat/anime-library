@@ -26,6 +26,10 @@ class Configuration(SingletonObject):
     self._config_path = self.normalize_path("%s/%s" % (self.location, self._config_path))
     self.load()
 
+  @property
+  def conf_location(self):
+    return self._config_path
+
   def _load_from_configs(self, filename):
     """
      Return content of file which located in configuration directory
@@ -143,18 +147,20 @@ class Configuration(SingletonObject):
 
     return False
 
-  def get(self, path: str, default=None, check_type: type=None):
+  def get(self, path: str, default=None, check_type: type=None, module: str=None):
     """
     Get option property
     :param path: full path to the property with name
     :param default: default value if original is not present
     :param check_type: cast param to passed type, if fail, default will returned
+    :param module: get property from module name
     :return:
     """
     if self._json is not None:
+      # process whole json or just concrete module
+      node = self._json if module is None else self.get_module_config(module)
       path_data = path.split('.')
       try:
-        node = self._json
         while len(path_data) > 0:
           node = node[path_data.pop(0)]
 
