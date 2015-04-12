@@ -46,6 +46,7 @@ class Configuration(SingletonObject):
         raise err
     else:
       self._log.error("File not found: %s", config_filename)
+      raise FileNotFoundError("File not found: %s" % config_filename)
 
   def load(self):
     """
