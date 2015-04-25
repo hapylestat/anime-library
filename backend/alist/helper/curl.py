@@ -111,7 +111,7 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
     manager.add_password(None, url, auth.user, auth.password)
     handler_chain.append(HTTPBasicAuthHandler(manager))
 
-  if auth is not None:
+  if auth is not None and auth.force:
     _headers.update(auth.headers)
 
   if req_type in post_req and data is not None:
