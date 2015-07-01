@@ -27,9 +27,7 @@ def __init__():
     if "local" in cfg_item["type"]:
       storage.add_storage(cfg_item["name"], ProviderProperties(location=cfg_item["location"], level=level))
 
-  rule = app._settings["endpoints"]["storage"]
-  if rule == "":
-    rule = "/storage"
+  rule = app.settings["endpoints"]["storage"]
 
   app.add_route(rule=rule, f=main, methods=['GET'])
 
@@ -37,7 +35,7 @@ def __init__():
 def main(args, headers):
   global check_token
   if check_token:
-    key = headers.get('access_key')
+    key = headers.get('access-key')
     if key is None:
       raise Exception('Access denied, no key found')
     token.parse_token(key)  # check if token is valid
