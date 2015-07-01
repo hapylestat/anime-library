@@ -16,7 +16,7 @@ class StorageApiProvider(AbstractProvider):
     headers = {}
     if secret is not None:
       headers.update({
-        'access_key': TokenHelper(secret).make_token({}, False)
+        'access-key': TokenHelper(secret).make_token({}, False)
       })
     try:
       resp = curl(url, req_type="GET", headers=headers)

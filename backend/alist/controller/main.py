@@ -71,6 +71,8 @@ class Application(SingletonObject):
           "storage": self.cfg.get("server.storage-api.endpoint", default="/storage", check_type=str)
         }
       })
+      if self._settings["endpoints"]["storage"] == "":
+        self._settings["endpoints"]["storage"] = "/storage"
       # ToDo: Check endpoints to be not math one location
 
       if self._settings["endpoints"]["api"][-1:] == "/":
@@ -94,6 +96,10 @@ class Application(SingletonObject):
       self._log.warning("Server settings not found (%s), use default ones", KeyError)
     except ValueError as err:
       self._log.error("Was passed unknown or wrong parameters. Please check configuration items, shutting down.")
+
+  @property
+  def settings(self):
+    return self._settings
 
   def start(self):
     mode = "debug" if self._settings["debug"] else "normal"

@@ -1,6 +1,7 @@
 from alist.providers.filters.abstract_filter import AbstractFilter
 from alist.config import Configuration
 
+
 class StoreFilter(AbstractFilter):
   def __init__(self):
     filters = Configuration.get_instance().get_module_config("storage_filter")

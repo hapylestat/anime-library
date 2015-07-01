@@ -26,9 +26,13 @@ class ProviderProperties(object):
     elif location is not None:
       self._location = str(location).replace("..", "")  # exclude cheating with relative patch
 
-    self._level = int(level) if level is not None else level
-    self._service = str(service) if service is not None else service
-    self._secret = str(secret) if secret is not None else secret
+    self._service = str(service) if service is not None else None
+    self._secret = str(secret) if secret is not None else None
+
+    if level is not None:
+      self._level = None if int(level) == -1 else int(level)
+    else:
+      self._level = None
 
   @property
   def location(self):
