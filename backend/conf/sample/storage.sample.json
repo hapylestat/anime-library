@@ -10,6 +10,7 @@
     "type": "remote",
     "enabled": true,
     "encrypted": true,
+    "secret": "",
     "service": "http://example.com:9001/storage"
   },
   {

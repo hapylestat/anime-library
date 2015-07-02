@@ -36,6 +36,7 @@
     "modules": {
       "mal": "myanimelist.json",
       "ann": "animenewsnetwork.json",
-      "storage": "storage.json"
+      "storage": "storage.json",
+      "storage_filter": "storage_filter.json"
     }
 }
