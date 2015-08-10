@@ -2,22 +2,48 @@
 import sys
 import json
 import base64
+import gzip
+import zlib
 
 if sys.version_info.major == 3:
   from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
   from urllib.parse import urlencode
+  from io import BytesIO
 else:
   from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
   from urllib import urlencode
+  from StringIO import StringIO as BytesIO
 
 
 class CURLResponse(object):
   def __init__(self, director_open_result):
     self._code = director_open_result.code
     self._headers = director_open_result.info()
-    self._content = director_open_result.read()
-    if isinstance(self._content, bytes):
-      self._content = self._content.decode('utf-8')
+    self._content = self.__decode_response(director_open_result.read())
+
+  def __decode_response(self, data):
+    data = self.__decode_compressed(data)
+    if isinstance(data, bytes) and "Content-Type" in self._headers and "charset" in self._headers["Content-Type"]:
+      charset = list(filter(lambda x: "charset" in x, self._headers["Content-Type"].split(';')))
+      if len(charset) > 0:
+        charset = charset[0].split('=')
+        if len(charset) == 2:
+          return data.decode(charset[1].lower())
+      return data.decode('utf-8')
+    elif isinstance(data, bytes):
+      return data.decode('utf-8')
+    else:
+      return data
+
+  def __decode_compressed(self, data):
+    if isinstance(data, bytes) and "Content-Encoding" in self._headers:
+
+      if "gzip" in self._headers["Content-Encoding"] or 'x-gzip' in self._headers["Content-Encoding"]:
+        data = gzip.GzipFile(fileobj=BytesIO(data)).read()
+      elif "deflate" in self._headers["Content-Encoding"]:
+        data = zlib.decompress(data)
+
+    return data
 
   @property
   def code(self):
@@ -40,8 +66,6 @@ class CURLResponse(object):
 
 class CURLAuth(object):
   def __init__(self, user, password, force=False, headers: dict=None):
-
-
     self._user = user
     self._password = password
     self._force = force  # Required if remote doesn't support http 401 response
@@ -82,8 +106,8 @@ class CURLAuth(object):
 
 
 def curl(url: str, params: dict=None, auth: CURLAuth=None,
-         req_type: ['GET', 'PUT', 'POST', 'DELETE']='GET',
-         data=None, headers: dict=None, timeout: int=None) -> CURLResponse:
+         req_type: str='GET',
+         data=None, headers: dict=None, timeout: int=None, use_gzip: bool=True) -> CURLResponse:
   """
   Make request to web resource
   :param url: Url to endpoint
@@ -106,6 +130,21 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
   _headers = {}
   handler_chain = []
 
+  # apply encoding to content
+  if req_type in post_req and data is not None:
+    if sys.version_info.major == 3:
+      _data = bytes(data, encoding='utf8')
+    else:
+      _data = bytes(data)
+
+  # process gzip
+  if use_gzip:
+    if "Accept-Encoding" in _headers:
+      if "gzip" not in _headers["Accept-Encoding"]:
+        _headers["Accept-Encoding"] += ", gzip, x-gzip, deflate"
+    else:
+      _headers["Accept-Encoding"] = "gzip, x-gzip, deflate"
+
   if auth is not None and auth.force is False:
     manager = HTTPPasswordMgrWithDefaultRealm()
     manager.add_password(None, url, auth.user, auth.password)
@@ -123,11 +162,6 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
   director = build_opener(*handler_chain)
 
   if req_type in post_req:
-    if sys.version_info.major == 3:
-      _data = bytes(data, encoding='utf8')
-    else:
-      _data = bytes(data)
-
     req = Request(url, headers=_headers, data=_data)
   else:
     req = Request(url, headers=_headers)
