@@ -19,7 +19,7 @@ class CURLResponse(object):
   def __init__(self, director_open_result):
     self._code = director_open_result.code
     self._headers = director_open_result.info()
-    self._content = self.__decode_response(director_open_result.read())
+    self._content = director_open_result.read()
 
   def __decode_response(self, data):
     data = self.__decode_compressed(data)
@@ -55,11 +55,15 @@ class CURLResponse(object):
 
   @property
   def content(self):
+    return self.__decode_response(self._content)
+
+  @property
+  def raw(self):
     return self._content
 
   def from_json(self):
     try:
-      return json.loads(self._content)
+      return json.loads(self.content)
     except ValueError:
       return None
 
