@@ -3,14 +3,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# Copyright (c) 2015 Reishin <hapy.lestat@gmail.com>
-
+# Copyright (c) 2015 Reishin <hapy.lestat@gmail.com> and Contributors
 
 import sys
 import json
 import base64
 import gzip
 import zlib
+import re
 
 if sys.version_info.major == 3:
   from urllib.request import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
@@ -20,6 +20,9 @@ else:
   from urllib2 import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, Request, build_opener, URLError, HTTPError
   from urllib import urlencode
   from StringIO import StringIO as BytesIO
+
+  class TimeoutError(RuntimeError):
+    pass
 
 
 class CURLResponse(object):
@@ -54,21 +57,39 @@ class CURLResponse(object):
 
   @property
   def code(self):
+    """
+    :return: HTTP Request Response code
+    """
     return self._code
 
   @property
   def headers(self):
+    """
+    :return: HTTP Response Headers
+    """
     return self._headers
 
   @property
   def content(self):
+    """
+    :return: Text content of the response (unzipped and decoded)
+    """
     return self.__decode_response(self._content)
 
   @property
   def raw(self):
+    """
+    :return: Raw content of the response
+    """
     return self._content
 
   def from_json(self):
+    """
+    :return: Return parsed json object from the response, if possible.
+             If operation fail, will be returned None
+
+    :rtype dict
+    """
     try:
       return json.loads(self.content)
     except ValueError:
@@ -76,7 +97,20 @@ class CURLResponse(object):
 
 
 class CURLAuth(object):
-  def __init__(self, user, password, force=False, headers: dict=None):
+  def __init__(self, user, password, force=False, headers=None):
+    """
+    Create Authorization Object
+
+    :param user: User name
+    :param password: Password
+    :param force: Generate HTTP Auth headers (skip 401 HTTP Response challenge)
+    :param headers: Send additional headers during authorization
+
+    :type user str
+    :type password str
+    :type force bool
+    :type headers dict
+    """
     self._user = user
     self._password = password
     self._force = force  # Required if remote doesn't support http 401 response
@@ -115,19 +149,64 @@ class CURLAuth(object):
       "Authorization": "Basic %s" % token.replace('\n', '')
     }
 
+# ToDo: refactor this part
+def __encode_str(data):
+  if sys.version_info.major == 3:
+    return bytes(data, encoding='utf8')
+  else:
+    return bytes(data)
 
-def curl(url: str, params: dict=None, auth: CURLAuth=None,
-         req_type: str='GET',
-         data=None, headers: dict=None, timeout: int=None, use_gzip: bool=True) -> CURLResponse:
+def __detect_str_type(data):
+  """
+  :type str
+  :rtype str
+  """
+  r = re.search("[^\=]+=[^\&]*\&*", data)  # application/x-www-form-urlencoded pattern
+  if r:
+    return "application/x-www-form-urlencoded"
+  else:
+    return "plain/text"
+
+
+def __parse_content(data):
+  response_data = data
+  response_headers = {}
+  if isinstance(data, dict) or isinstance(data, list) or isinstance(data, set) or isinstance(data, tuple):
+    response_data = __encode_str(json.dumps(data))
+    response_headers = {"Content-Type": "application/json; charset=UTF-8"}
+  elif type(data) is str:
+      response_data = __encode_str(data)
+      response_headers = {
+        "Content-Type": "%s; charset=UTF-8" % __detect_str_type(data)
+      }
+  else:
+    response_data = data
+    response_headers = {}
+
+  return response_data, response_headers
+
+def curl(url, params=None, auth=None, req_type='GET', data=None, headers=None, timeout=None, use_gzip=True):
   """
   Make request to web resource
+
   :param url: Url to endpoint
   :param params: list of params after "?"
   :param auth: authorization tokens
   :param req_type: type of the request
   :param data: data which need to be posted
   :param headers: headers which would be posted with request
-  :return: Response object
+  :param timeout: Request timeout
+  :param use_gzip: Accept gzip and deflate response from the server
+  :return Response object
+
+  :type url str
+  :type params dict
+  :type auth CURLAuth
+  :type req_type str
+  :type headers dict
+  :type timeout int
+  :type use_gzip bool
+  :rtype CURLResponse
   """
   post_req = ["POST", "PUT"]
   get_req = ["GET", "DELETE"]
@@ -140,15 +219,17 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
 
   _headers = {}
   handler_chain = []
-
-  # apply encoding to content
+  req_args = {
+    "headers": _headers
+  }
+  # process content
   if req_type in post_req and data is not None:
-    if sys.version_info.major == 3:
-      _data = bytes(data, encoding='utf8')
-    else:
-      _data = bytes(data)
+    _data, __header = __parse_content(data)
+    _headers.update(__header)
+    _headers["Content-Length"] = len(_data)
+    req_args["data"] = _data
 
-  # process gzip
+  # process gzip and deflate
   if use_gzip:
     if "Accept-Encoding" in _headers:
       if "gzip" not in _headers["Accept-Encoding"]:
@@ -164,19 +245,11 @@ def curl(url: str, params: dict=None, auth: CURLAuth=None,
   if auth is not None and auth.force:
     _headers.update(auth.headers)
 
-  if req_type in post_req and data is not None:
-    _headers["Content-Length"] = len(data)
-
   if headers is not None:
     _headers.update(headers)
 
   director = build_opener(*handler_chain)
-
-  if req_type in post_req:
-    req = Request(url, headers=_headers, data=_data)
-  else:
-    req = Request(url, headers=_headers)
-
+  req = Request(url, **req_args)
   req.get_method = lambda: req_type
 
   try:
