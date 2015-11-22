@@ -1,0 +1,22 @@
+[
+  {
+    "name": "store1",
+    "type": "local",
+    "location": "d:\\",
+    "enabled": false
+  },
+  {
+    "name": "store2",
+    "type": "remote",
+    "enabled": true,
+    "encrypted": true,
+    "service": "http://example.com:9001/storage"
+  },
+  {
+    "name": "example",
+    "type": "remote",
+    "enabled": true,
+    "encrypted": false,
+    "location": "http://example.com:9001/storage?q=view&storage=store1"
+  }
+]

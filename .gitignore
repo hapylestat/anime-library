@@ -1,0 +1,14 @@
+#exclude cache folders
+backend/cache/data/*
+backend/cache/images/*
+
+#exclude samples of config files but include all others
+!backend/conf/sample/*.sample.json
+backend/conf/*.json
+
+#incluce compiled python files, idea project files, c9 cloud files
+/nbproject/*
+*.pyc
+*.iml
+.idea/*
+.c9/*
